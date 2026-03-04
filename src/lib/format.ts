@@ -1,23 +1,9 @@
-import type { Currency } from "./types";
-
 export function formatINR(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(amount);
-}
-
-export function formatUSD(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
-export function formatCurrency(amount: number, currency: Currency): string {
-  return currency === "INR" ? formatINR(amount) : formatUSD(amount);
 }
 
 export function formatDate(dateStr: string): string {
