@@ -48,3 +48,61 @@ export async function getFreeBusy(
 
   return res.data.calendars?.[calendarId]?.busy ?? [];
 }
+
+export async function createCalendarEvent(
+  accessToken: string,
+  calendarId: string,
+  event: {
+    summary: string;
+    description?: string;
+    start: string; // ISO datetime
+    end: string; // ISO datetime
+  },
+): Promise<string | null> {
+  const { calendar } = createGoogleClient(accessToken);
+  const res = await calendar.events.insert({
+    calendarId,
+    requestBody: {
+      summary: event.summary,
+      description: event.description,
+      start: { dateTime: event.start },
+      end: { dateTime: event.end },
+    },
+  });
+  return res.data.id ?? null;
+}
+
+export async function updateCalendarEvent(
+  accessToken: string,
+  calendarId: string,
+  eventId: string,
+  event: {
+    summary?: string;
+    description?: string;
+    start?: string;
+    end?: string;
+  },
+): Promise<void> {
+  const { calendar } = createGoogleClient(accessToken);
+  const requestBody: Record<string, unknown> = {};
+  if (event.summary) requestBody.summary = event.summary;
+  if (event.description !== undefined)
+    requestBody.description = event.description;
+  if (event.start) requestBody.start = { dateTime: event.start };
+  if (event.end) requestBody.end = { dateTime: event.end };
+
+  await calendar.events.patch({
+    calendarId,
+    eventId,
+    requestBody,
+  });
+}
+
+export async function deleteCalendarEvent(
+  accessToken: string,
+  calendarId: string,
+  eventId: string,
+): Promise<void> {
+  const { calendar } = createGoogleClient(accessToken);
+  await calendar.events.delete({ calendarId, eventId });
+}
