@@ -1,7 +1,33 @@
+import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Plus } from "@/components/ui/icons";
+import { Plus, CalendarBlank } from "@/components/ui/icons";
+import { EmptyState } from "@/components/empty-state";
 
-export default function SessionsPage() {
+export default async function SessionsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let onboardingCompleted = false;
+  let items: { id: number }[] = [];
+
+  if (user) {
+    const { data: settings } = await supabase
+      .from("therapist_settings")
+      .select("onboarding_completed")
+      .eq("user_id", user.id)
+      .single();
+    onboardingCompleted = settings?.onboarding_completed ?? false;
+
+    const { data } = await supabase
+      .from("sessions")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("date", { ascending: false });
+    items = data ?? [];
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -17,11 +43,28 @@ export default function SessionsPage() {
         </Button>
       </div>
 
-      <div className="mt-16 text-center">
-        <p className="text-sm text-muted-foreground">
-          No sessions recorded yet.
-        </p>
-      </div>
+      {items.length === 0 ? (
+        !onboardingCompleted ? (
+          <EmptyState
+            icon={CalendarBlank}
+            title="Sync your calendar"
+            description="Connect Google Calendar to automatically import and track your sessions."
+            action={{ label: "Connect Google Calendar", href: "/onboarding" }}
+          />
+        ) : (
+          <EmptyState
+            icon={CalendarBlank}
+            title="No sessions yet"
+            description="Sessions will appear as you sync your calendar or clients book appointments."
+          />
+        )
+      ) : (
+        <div className="mt-6">
+          <p className="text-sm text-muted-foreground">
+            {items.length} session{items.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
