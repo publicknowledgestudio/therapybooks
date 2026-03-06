@@ -1,22 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 import {
   CalendarBlank,
   Check,
   CheckCircle,
   Circle,
+  MagnifyingGlass,
+  Users,
 } from "@/components/ui/icons";
 
 type CalendarItem = {
   id: string;
   summary: string;
   primary: boolean;
+};
+
+type ContactItem = {
+  name: string;
+  email: string | null;
+  phone: string | null;
+  inCalendar: boolean;
 };
 
 const TOTAL_STEPS = 4;
@@ -50,6 +63,17 @@ export default function OnboardingPage() {
   const [selectedCalendar, setSelectedCalendar] = useState<string | null>(null);
   const [loadingCalendars, setLoadingCalendars] = useState(false);
   const [calendarError, setCalendarError] = useState("");
+
+  // Step 3: Contacts import state
+  const [contacts, setContacts] = useState<ContactItem[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<Set<number>>(
+    new Set(),
+  );
+  const [contactSearch, setContactSearch] = useState("");
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [contactsError, setContactsError] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importCount, setImportCount] = useState<number | null>(null);
 
   // Check session on mount
   useEffect(() => {
@@ -97,6 +121,125 @@ export default function OnboardingPage() {
 
     fetchCalendars();
   }, [step, hasGoogleToken]);
+
+  // Fetch contacts when entering step 3
+  useEffect(() => {
+    if (step !== 3) return;
+
+    async function fetchContacts() {
+      setLoadingContacts(true);
+      setContactsError("");
+
+      try {
+        const params = new URLSearchParams();
+        if (selectedCalendar) {
+          params.set("calendarId", selectedCalendar);
+        }
+        const res = await fetch(`/api/contacts?${params.toString()}`);
+        if (!res.ok) {
+          throw new Error("Failed to fetch contacts");
+        }
+        const data = await res.json();
+        const items: ContactItem[] = data.contacts ?? [];
+        setContacts(items);
+
+        // Pre-select contacts that appear in calendar
+        const preSelected = new Set<number>();
+        items.forEach((c, i) => {
+          if (c.inCalendar) preSelected.add(i);
+        });
+        setSelectedContacts(preSelected);
+      } catch {
+        setContactsError(
+          "Could not load your contacts. Please try again or skip this step.",
+        );
+      } finally {
+        setLoadingContacts(false);
+      }
+    }
+
+    fetchContacts();
+  }, [step, selectedCalendar]);
+
+  // Filtered contacts based on search
+  const filteredContacts = useMemo(() => {
+    if (!contactSearch.trim()) return contacts;
+    const query = contactSearch.toLowerCase();
+    return contacts.filter(
+      (c) =>
+        c.name.toLowerCase().includes(query) ||
+        c.email?.toLowerCase().includes(query) ||
+        c.phone?.includes(query),
+    );
+  }, [contacts, contactSearch]);
+
+  // Map filtered indices back to original indices for selection tracking
+  const filteredIndices = useMemo(() => {
+    if (!contactSearch.trim()) return contacts.map((_, i) => i);
+    const query = contactSearch.toLowerCase();
+    return contacts.reduce<number[]>((acc, c, i) => {
+      if (
+        c.name.toLowerCase().includes(query) ||
+        c.email?.toLowerCase().includes(query) ||
+        c.phone?.includes(query)
+      ) {
+        acc.push(i);
+      }
+      return acc;
+    }, []);
+  }, [contacts, contactSearch]);
+
+  function toggleContact(originalIndex: number) {
+    setSelectedContacts((prev) => {
+      const next = new Set(prev);
+      if (next.has(originalIndex)) {
+        next.delete(originalIndex);
+      } else {
+        next.add(originalIndex);
+      }
+      return next;
+    });
+  }
+
+  async function handleImport() {
+    const contactsToImport = Array.from(selectedContacts).map((i) => ({
+      name: contacts[i].name,
+      email: contacts[i].email,
+      phone: contacts[i].phone,
+    }));
+
+    if (contactsToImport.length === 0) {
+      toast.error("Please select at least one contact to import.");
+      return;
+    }
+
+    setImporting(true);
+
+    try {
+      const res = await fetch("/api/clients/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contacts: contactsToImport,
+          calendarId: selectedCalendar,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to import clients");
+      }
+
+      const data = await res.json();
+      const count = data.imported ?? contactsToImport.length;
+      setImportCount(count);
+      toast.success(`Successfully imported ${count} client${count !== 1 ? "s" : ""}.`);
+      setStep(4);
+    } catch {
+      toast.error("Failed to import clients. Please try again.");
+    } finally {
+      setImporting(false);
+    }
+  }
 
   async function handleGoogleConnect() {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -260,15 +403,125 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* Step 3: Import Clients (placeholder) */}
+      {/* Step 3: Import Clients */}
       {step === 3 && (
         <div className="mt-8">
           <h1 className="text-2xl font-semibold">Import your clients</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            We&apos;ll set this up in the next step.
+            Select contacts from your Google account to add as clients.
+            Contacts who appear in your calendar are pre-selected.
           </p>
 
-          <div className="mt-8 flex items-center justify-between">
+          <div className="mt-6">
+            {/* Loading skeletons */}
+            {loadingContacts && (
+              <div className="space-y-3">
+                <Skeleton className="h-9 w-full rounded-md" />
+                {Array.from({ length: 5 }, (_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded-lg border p-3"
+                  >
+                    <Skeleton className="h-4 w-4 rounded-[4px]" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-4 w-36" />
+                      <Skeleton className="h-3 w-48" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Error state */}
+            {contactsError && (
+              <p className="text-sm text-red-600">{contactsError}</p>
+            )}
+
+            {/* Empty state */}
+            {!loadingContacts && !contactsError && contacts.length === 0 && (
+              <div className="flex flex-col items-center gap-3 py-8 text-center">
+                <Users className="size-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  No contacts found in your Google account. You can add clients
+                  manually from the dashboard.
+                </p>
+              </div>
+            )}
+
+            {/* Contacts list */}
+            {!loadingContacts && contacts.length > 0 && (
+              <>
+                {/* Search */}
+                <div className="relative">
+                  <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search contacts..."
+                    value={contactSearch}
+                    onChange={(e) => setContactSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                {/* Selection counter */}
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {selectedContacts.size} selected
+                </p>
+
+                {/* Scrollable list */}
+                <ScrollArea className="mt-2 h-[320px] rounded-lg border">
+                  <div className="p-1">
+                    {filteredContacts.length === 0 && (
+                      <p className="p-4 text-center text-sm text-muted-foreground">
+                        No contacts match your search.
+                      </p>
+                    )}
+                    {filteredContacts.map((contact, filterIdx) => {
+                      const originalIdx = filteredIndices[filterIdx];
+                      const isSelected = selectedContacts.has(originalIdx);
+
+                      return (
+                        <label
+                          key={originalIdx}
+                          className="flex cursor-pointer items-center gap-3 rounded-md p-3 transition-colors hover:bg-accent/50"
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleContact(originalIdx)}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate text-sm font-medium">
+                                {contact.name}
+                              </span>
+                              {contact.inCalendar && (
+                                <Badge
+                                  variant="secondary"
+                                  className="shrink-0 text-[10px]"
+                                >
+                                  <CalendarBlank className="mr-1 size-3" />
+                                  In your calendar
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              {contact.email && (
+                                <span className="truncate">{contact.email}</span>
+                              )}
+                              {contact.phone && (
+                                <span className="shrink-0">{contact.phone}</span>
+                              )}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </>
+            )}
+          </div>
+
+          <div className="mt-6 flex items-center justify-between">
             <button
               type="button"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -276,7 +529,14 @@ export default function OnboardingPage() {
             >
               Skip
             </button>
-            <Button onClick={() => setStep(4)}>Next</Button>
+            <Button
+              onClick={handleImport}
+              disabled={selectedContacts.size === 0 || importing}
+            >
+              {importing
+                ? "Importing..."
+                : `Import ${selectedContacts.size} Client${selectedContacts.size !== 1 ? "s" : ""}`}
+            </Button>
           </div>
         </div>
       )}
@@ -289,7 +549,9 @@ export default function OnboardingPage() {
             <h1 className="text-2xl font-semibold">You&apos;re all set!</h1>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your practice is ready. Head to your dashboard to get started.
+            {importCount !== null
+              ? `Imported ${importCount} client${importCount !== 1 ? "s" : ""}. Your practice is ready.`
+              : "Your practice is ready. Head to your dashboard to get started."}
           </p>
 
           <div className="mt-8">
