@@ -1,0 +1,20 @@
+{
+  "planPath": "docs/plans/2026-03-05-onboarding-calendar-booking.md",
+  "tasks": [
+    {"id": 0, "subject": "Task 0: Install dependencies & set up Google OAuth in Supabase", "status": "pending"},
+    {"id": 1, "subject": "Task 1: Database schema — new tables + RLS", "status": "pending", "blockedBy": [0]},
+    {"id": 2, "subject": "Task 2: Google OAuth sign-in for therapists", "status": "pending", "blockedBy": [0]},
+    {"id": 3, "subject": "Task 3: Onboarding wizard — welcome + calendar selection", "status": "pending", "blockedBy": [1, 2]},
+    {"id": 4, "subject": "Task 4: Onboarding wizard — import clients from Google Contacts", "status": "pending", "blockedBy": [3]},
+    {"id": 5, "subject": "Task 5: Calendar sync — inbound (GCal → sessions)", "status": "pending", "blockedBy": [3]},
+    {"id": 6, "subject": "Task 6: Calendar sync — outbound (sessions → GCal)", "status": "pending", "blockedBy": [5]},
+    {"id": 7, "subject": "Task 7: Settings page — availability & Google connection", "status": "pending", "blockedBy": [1, 2]},
+    {"id": 8, "subject": "Task 8: Public booking page (/book/[slug])", "status": "pending", "blockedBy": [6, 7]},
+    {"id": 9, "subject": "Task 9: Client portal (/my-appointments)", "status": "pending", "blockedBy": [8]},
+    {"id": 10, "subject": "Task 10: Dashboard — Appointments Today + WhatsApp reminders", "status": "pending", "blockedBy": [5]},
+    {"id": 11, "subject": "Task 11: Update all empty states to be onboarding-aware", "status": "pending", "blockedBy": [3]},
+    {"id": 12, "subject": "Task 12: Add new icons + final polish", "status": "pending", "blockedBy": [10, 11]},
+    {"id": 13, "subject": "Task 13: Final verification", "status": "pending", "blockedBy": [8, 9, 10, 11, 12]}
+  ],
+  "lastUpdated": "2026-03-05T12:00:00Z"
+}
