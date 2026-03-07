@@ -36,6 +36,7 @@ export async function middleware(request: NextRequest) {
     "/api/auth",
     "/api/calendar/availability",
     "/api/bookings",
+    "/api/client-portal",
   ];
   const isPublicPath = publicPaths.some((p) =>
     request.nextUrl.pathname.startsWith(p)
