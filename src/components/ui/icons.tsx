@@ -21,6 +21,7 @@ export {
   EyeSlash,
   FileText,
   GearSix,
+  GoogleLogo,
   Info,
   Lightning,
   List,
@@ -41,6 +42,7 @@ export {
   Wallet,
   Warning,
   WarningCircle,
+  WhatsappLogo,
   X,
   XCircle,
 } from "@phosphor-icons/react";
