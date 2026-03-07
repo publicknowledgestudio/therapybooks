@@ -1,7 +1,25 @@
+import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Plus } from "@/components/ui/icons";
+import { Plus, FileText } from "@/components/ui/icons";
+import { EmptyState } from "@/components/empty-state";
 
-export default function InvoicesPage() {
+export default async function InvoicesPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let items: { id: number }[] = [];
+
+  if (user) {
+    const { data } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("date", { ascending: false });
+    items = data ?? [];
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -17,11 +35,24 @@ export default function InvoicesPage() {
         </Button>
       </div>
 
-      <div className="mt-16 text-center">
-        <p className="text-sm text-muted-foreground">
-          No invoices created yet.
-        </p>
-      </div>
+      {items.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title="No invoices yet"
+          description="Create your first invoice after recording some sessions."
+          action={{
+            label: "New Invoice",
+            href: "/invoices/new",
+            variant: "outline",
+          }}
+        />
+      ) : (
+        <div className="mt-6">
+          <p className="text-sm text-muted-foreground">
+            {items.length} invoice{items.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
