@@ -29,28 +29,40 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { pathname } = request.nextUrl;
+
   const publicPaths = [
-    "/login",
     "/book",
     "/my-appointments",
     "/api/auth",
     "/api/calendar/availability",
     "/api/bookings",
     "/api/client-portal",
+    "/privacy",
+    "/terms",
   ];
-  const isPublicPath = publicPaths.some((p) =>
-    request.nextUrl.pathname.startsWith(p)
-  );
+  const isPublicPath =
+    pathname === "/" ||
+    publicPaths.some((p) => pathname.startsWith(p));
 
+  // Redirect unauthenticated users to landing page
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
-  if (user && request.nextUrl.pathname.startsWith("/login")) {
+  // Redirect authenticated users from landing page to dashboard
+  if (user && pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  // Backward compat: redirect /login to / or /dashboard
+  if (pathname === "/login") {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/dashboard" : "/";
     return NextResponse.redirect(url);
   }
 

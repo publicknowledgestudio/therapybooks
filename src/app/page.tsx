@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   CalendarBlank,
@@ -30,7 +30,6 @@ const FEATURES = [
     title: "Client Reminders",
     description: "One-click Whatsapp reminders for sessions with meeting links or location pins to reduce no-shows.",
   },
-
 ];
 
 const PERMISSIONS = [
@@ -48,9 +47,8 @@ const PERMISSIONS = [
   },
 ];
 
-export default function LoginPage() {
+export default function LandingPage() {
   const [error, setError] = useState("");
-  const router = useRouter();
   const supabase = createClient();
 
   async function handleGoogleSignIn() {
@@ -165,6 +163,17 @@ export default function LoginPage() {
             We never share your data with anyone. You can revoke access at any
             time from your Google account settings.
           </p>
+        </div>
+
+        {/* Legal links */}
+        <div className="mt-8 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+          <Link href="/privacy" className="transition-colors hover:text-foreground">
+            Privacy Policy
+          </Link>
+          <span>&middot;</span>
+          <Link href="/terms" className="transition-colors hover:text-foreground">
+            Terms of Service
+          </Link>
         </div>
       </div>
     </div>

@@ -24,7 +24,7 @@ import {
 import { usePrivacy } from "@/lib/privacy";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: SquaresFour },
+  { label: "Dashboard", href: "/dashboard", icon: SquaresFour },
   { label: "Clients", href: "/clients", icon: Users },
   { label: "Sessions", href: "/sessions", icon: CalendarBlank },
   { label: "Bank Statement", href: "/statement", icon: ArrowsLeftRight },
@@ -90,12 +90,14 @@ export function Sidebar() {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/");
     router.refresh();
   }
 
   function isActive(href: string) {
-    return href === "/" ? pathname === "/" : pathname.startsWith(href);
+    return href === "/dashboard"
+      ? pathname === "/dashboard"
+      : pathname.startsWith(href);
   }
 
   return (
@@ -160,12 +162,14 @@ export function MobileNav() {
   async function handleSignOut() {
     setOpen(false);
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/");
     router.refresh();
   }
 
   function isActive(href: string) {
-    return href === "/" ? pathname === "/" : pathname.startsWith(href);
+    return href === "/dashboard"
+      ? pathname === "/dashboard"
+      : pathname.startsWith(href);
   }
 
   return (

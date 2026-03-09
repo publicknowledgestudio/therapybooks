@@ -261,7 +261,7 @@ export default function OnboardingPage() {
   }
 
   function handleGoToDashboard() {
-    router.push("/");
+    router.push("/dashboard");
     router.refresh();
   }
 
