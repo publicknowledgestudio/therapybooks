@@ -25,6 +25,7 @@ export function AddClientDialog() {
   const [phone, setPhone] = useState("");
   const [currentRate, setCurrentRate] = useState("");
   const [openingBalance, setOpeningBalance] = useState("");
+  const [balanceType, setBalanceType] = useState<"owes" | "advance">("owes");
 
   function resetForm() {
     setName("");
@@ -32,6 +33,7 @@ export function AddClientDialog() {
     setPhone("");
     setCurrentRate("");
     setOpeningBalance("");
+    setBalanceType("owes");
     setError("");
   }
 
@@ -45,12 +47,18 @@ export function AddClientDialog() {
     setError("");
 
     startTransition(async () => {
+      // Apply sign: advance payments stored as negative
+      const signedBalance =
+        openingBalance && balanceType === "advance"
+          ? `-${openingBalance}`
+          : openingBalance;
+
       const result = await createClientAction({
         name,
         email,
         phone,
         currentRate,
-        openingBalance,
+        openingBalance: signedBalance,
       });
 
       if (result.error) {
@@ -129,17 +137,44 @@ export function AddClientDialog() {
           <div className="space-y-1.5">
             <Label htmlFor="client-balance">Opening Balance (INR)</Label>
             <p className="text-xs text-muted-foreground">
-              Amount this client owes you from before you started using therapybook.
+              Starting balance from before you started using therapybook.
             </p>
-            <Input
-              id="client-balance"
-              type="number"
-              min="0"
-              step="1"
-              value={openingBalance}
-              onChange={(e) => setOpeningBalance(e.target.value)}
-              placeholder="0"
-            />
+            <div className="flex gap-2">
+              <div className="inline-flex rounded-md border border-border text-xs">
+                <button
+                  type="button"
+                  className={`rounded-l-md px-3 py-1.5 transition-colors ${
+                    balanceType === "owes"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => setBalanceType("owes")}
+                >
+                  Owes you
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-r-md px-3 py-1.5 transition-colors ${
+                    balanceType === "advance"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => setBalanceType("advance")}
+                >
+                  Paid in advance
+                </button>
+              </div>
+              <Input
+                id="client-balance"
+                type="number"
+                min="0"
+                step="1"
+                value={openingBalance}
+                onChange={(e) => setOpeningBalance(e.target.value)}
+                placeholder="0"
+                className="flex-1"
+              />
+            </div>
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

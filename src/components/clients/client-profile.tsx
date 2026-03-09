@@ -1,6 +1,7 @@
 "use client";
 
 import { InlineField } from "@/components/ui/inline-field";
+import { BalanceInlineField } from "@/components/clients/balance-inline-field";
 import { formatINR } from "@/lib/format";
 
 interface ClientProfileProps {
@@ -67,14 +68,9 @@ export function ClientProfile({ client }: ClientProfileProps) {
           />
         </div>
         <div>
-          <InlineField
-            label="Opening Balance (INR)"
+          <BalanceInlineField
             value={client.opening_balance}
-            field="opening_balance"
             clientId={client.id}
-            type="number"
-            placeholder="0"
-            format={(v) => (v !== null && v !== "" && Number(v) !== 0 ? formatINR(Number(v)) : "")}
           />
         </div>
       </div>

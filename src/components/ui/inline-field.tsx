@@ -17,6 +17,7 @@ interface InlineFieldProps {
   placeholder?: string;
   format?: (v: string | number | null) => string;
   required?: boolean;
+  min?: string;
 }
 
 export function InlineField({
@@ -28,6 +29,7 @@ export function InlineField({
   placeholder,
   format,
   required,
+  min,
 }: InlineFieldProps) {
   const [editing, setEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value?.toString() ?? "");
@@ -126,7 +128,7 @@ export function InlineField({
           <Input
             ref={inputRef as React.RefObject<HTMLInputElement>}
             type={type}
-            min={type === "number" ? "0" : undefined}
+            min={type === "number" ? (min ?? "0") : undefined}
             step={type === "number" ? "1" : undefined}
             {...sharedProps}
           />

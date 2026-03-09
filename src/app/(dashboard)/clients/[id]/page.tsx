@@ -73,10 +73,16 @@ export default async function ClientDetailPage({
   const paymentsReceived = payments.reduce((sum, p) => sum + p.amount, 0);
   const outstanding = client.opening_balance + sessionsCharged - paymentsReceived;
 
+  const openingBalanceLabel =
+    client.opening_balance < 0 ? "Advance Payment" : "Opening Balance";
+  const openingBalanceColor =
+    client.opening_balance < 0 ? "text-green-600" : undefined;
+
   const balanceCards = [
     {
-      label: "Opening Balance",
-      value: formatINR(client.opening_balance),
+      label: openingBalanceLabel,
+      value: formatINR(Math.abs(client.opening_balance)),
+      color: openingBalanceColor,
       icon: Wallet,
     },
     {
@@ -90,7 +96,7 @@ export default async function ClientDetailPage({
       icon: CurrencyInr,
     },
     {
-      label: "Outstanding",
+      label: outstanding > 0 ? "Outstanding" : outstanding < 0 ? "Advance Balance" : "Outstanding",
       value: formatINR(Math.abs(outstanding)),
       color:
         outstanding > 0

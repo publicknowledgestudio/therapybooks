@@ -32,8 +32,8 @@ export async function createClientAction(formData: {
 
   const balanceValue = formData.openingBalance.trim();
   const openingBalance = balanceValue ? parseFloat(balanceValue) : 0;
-  if (balanceValue && (isNaN(openingBalance) || openingBalance < 0)) {
-    return { error: "Opening balance must be a valid positive number" };
+  if (balanceValue && isNaN(openingBalance)) {
+    return { error: "Opening balance must be a valid number" };
   }
 
   const { data, error } = await supabase
@@ -118,8 +118,8 @@ export async function updateClientAction(
         break;
       }
       const balance = parseFloat(trimmed);
-      if (isNaN(balance) || balance < 0) {
-        return { error: "Opening balance must be a valid positive number" };
+      if (isNaN(balance)) {
+        return { error: "Opening balance must be a valid number" };
       }
       parsedValue = balance;
       break;
