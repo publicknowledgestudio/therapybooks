@@ -10,8 +10,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "therapybooks",
-  description: "Therapy practice accounting",
+  title: "therapybook",
+  description: "Simple bookkeeping for Indian therapists",
+  icons: {
+    icon: [
+      { url: "/therapybook-icon.png", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
