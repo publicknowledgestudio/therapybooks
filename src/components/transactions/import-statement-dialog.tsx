@@ -32,7 +32,7 @@ import {
   checkDuplicates,
   suggestTags,
   type TagSuggestion,
-} from "@/app/(dashboard)/transactions/actions";
+} from "@/app/(dashboard)/statement/actions";
 
 interface ParsedRow {
   date: string;

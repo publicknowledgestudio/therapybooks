@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { UploadSimple, ArrowsLeftRight } from "@/components/ui/icons";
 import { EmptyState } from "@/components/empty-state";
 
-export default async function TransactionsPage() {
+export default async function StatementPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -25,10 +25,10 @@ export default async function TransactionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">
-            Transactions
+            Bank Statement
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Bank transactions and payment allocations
+            Imported bank transactions and payment allocations
           </p>
         </div>
         <Button variant="outline" size="sm">

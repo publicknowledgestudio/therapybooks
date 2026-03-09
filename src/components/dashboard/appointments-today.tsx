@@ -2,6 +2,7 @@
 
 import { CalendarBlank, WhatsappLogo } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
+import { usePrivacy } from "@/lib/privacy";
 
 export interface SessionItem {
   id: number;
@@ -55,6 +56,8 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function AppointmentsToday({ sessions }: AppointmentsTodayProps) {
+  const { isPrivate, mask } = usePrivacy();
+
   if (sessions.length === 0) {
     return (
       <div className="mt-8">
@@ -70,7 +73,7 @@ export function AppointmentsToday({ sessions }: AppointmentsTodayProps) {
   }
 
   function handleSendReminder(session: SessionItem) {
-    if (!session.clientPhone) return;
+    if (!session.clientPhone || isPrivate) return;
     const phone = stripPhone(session.clientPhone);
     const time = formatTime(session.startTime);
     const message = `Hi ${session.clientName}, this is a reminder about your appointment today at ${time}. Looking forward to seeing you!`;
@@ -105,7 +108,7 @@ export function AppointmentsToday({ sessions }: AppointmentsTodayProps) {
                   {formatTimeRange(session.startTime, session.endTime)}
                 </td>
                 <td className="px-4 py-3 text-sm font-medium text-foreground">
-                  {session.clientName}
+                  {mask(session.clientName)}
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={session.status} />
@@ -115,11 +118,13 @@ export function AppointmentsToday({ sessions }: AppointmentsTodayProps) {
                     variant="ghost"
                     size="icon-sm"
                     onClick={() => handleSendReminder(session)}
-                    disabled={!session.clientPhone}
+                    disabled={!session.clientPhone || isPrivate}
                     title={
-                      session.clientPhone
-                        ? "Send WhatsApp reminder"
-                        : "No phone number on file"
+                      isPrivate
+                        ? "Disabled in private mode"
+                        : session.clientPhone
+                          ? "Send WhatsApp reminder"
+                          : "No phone number on file"
                     }
                   >
                     <WhatsappLogo className="size-4" weight="regular" />

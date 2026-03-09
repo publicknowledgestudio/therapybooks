@@ -1,6 +1,7 @@
 "use client";
 
 export {
+  AddressBook,
   ArrowSquareOut,
   ArrowsLeftRight,
   Bank,
@@ -34,6 +35,7 @@ export {
   Percent,
   Plus,
   Receipt,
+  ShieldCheck,
   SidebarSimple,
   SignOut,
   Spinner,

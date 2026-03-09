@@ -1,17 +1,55 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  CalendarBlank,
+  Users,
+  CurrencyInr,
+  AddressBook,
+} from "@/components/ui/icons";
+
+const FEATURES = [
+  {
+    icon: CurrencyInr,
+    title: "Payment Tracking",
+    description:
+      "Import HDFC Bank statements and automatically match payments to client sessions, generate invoices, and flag overdue payments.",
+  },
+  {
+    icon: CalendarBlank,
+    title: "Session Scheduling",
+    description:
+      "Enforce your working hours and a cancellation policy, and show clients a page where they can book sessions on empty calendar slots themselves.",
+  },
+  {
+    icon: Users,
+    title: "Client Reminders",
+    description: "One-click Whatsapp reminders for sessions with meeting links or location pins to reduce no-shows.",
+  },
+
+];
+
+const PERMISSIONS = [
+  {
+    icon: CalendarBlank,
+    scope: "Google Calendar",
+    reason:
+      "So your sessions appear on your calendar automatically, and new calendar events can create sessions in therapybook.",
+  },
+  {
+    icon: AddressBook,
+    scope: "Google Contacts",
+    reason:
+      "Allows you to pick your clients from your phone contacts during onboarding instead of typing them in manually.",
+  },
+];
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -34,39 +72,43 @@ export default function LoginPage() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      router.push("/");
-      router.refresh();
-    }
-  }
-
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold text-foreground">
-          therapybooks
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Sign in to your account
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-16">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <Image
+          src="/therapybook-logo.png"
+          alt="therapybook"
+          width={200}
+          height={46}
+          className="h-8 w-auto"
+          priority
+        />
+
+        {/* Tagline */}
+        <p className="mt-3 text-lg text-muted-foreground">
+          Simple bookkeeping for Indian therapists.
         </p>
 
-        <div className="mt-8 space-y-6">
+        {/* Features */}
+        <div className="mt-10 space-y-5">
+          {FEATURES.map(({ icon: Icon, title, description }) => (
+            <div key={title} className="flex gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-card">
+                <Icon className="h-4 w-4 text-muted-foreground" weight="regular" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">{title}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Sign in */}
+        <div className="mt-10">
           <Button
             type="button"
-            variant="outline"
             className="w-full"
             onClick={handleGoogleSignIn}
           >
@@ -95,47 +137,34 @@ export default function LoginPage() {
             Sign in with Google
           </Button>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                or
-              </span>
-            </div>
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        </div>
+
+        {/* Permissions explainer */}
+        <div className="mt-10 rounded-lg border border-border bg-card p-5">
+          <p className="text-sm font-medium text-foreground">
+            Why we ask for permissions
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            We need access to your calendar, contacts and bank statement to
+            automatically start matching sessions to your bank statement. This is
+            optional, and you can alternatively fill out things manually.
+          </p>
+          <div className="mt-4 space-y-3">
+            {PERMISSIONS.map(({ icon: Icon, scope, reason }) => (
+              <div key={scope} className="flex gap-2.5">
+                <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" weight="regular" />
+                <div>
+                  <p className="text-xs font-medium text-foreground">{scope}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{reason}</p>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            {error && <p className="text-sm text-red-600">{error}</p>}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
+          <p className="mt-4 text-xs text-muted-foreground">
+            We never share your data with anyone. You can revoke access at any
+            time from your Google account settings.
+          </p>
         </div>
       </div>
     </div>

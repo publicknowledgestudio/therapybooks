@@ -406,10 +406,11 @@ export default function OnboardingPage() {
       {/* Step 3: Import Clients */}
       {step === 3 && (
         <div className="mt-8">
-          <h1 className="text-2xl font-semibold">Import your clients</h1>
+          <h1 className="text-2xl font-semibold">Add your active clients</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Select contacts from your Google account to add as clients.
-            Contacts who appear in your calendar are pre-selected.
+            Select the clients you currently see. Contacts who appear in your
+            calendar are pre-selected. You can set opening balances for anyone
+            who owes you money from before.
           </p>
 
           <div className="mt-6">
@@ -550,7 +551,7 @@ export default function OnboardingPage() {
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {importCount !== null
-              ? `Imported ${importCount} client${importCount !== 1 ? "s" : ""}. Your practice is ready.`
+              ? `Imported ${importCount} client${importCount !== 1 ? "s" : ""}. If any of them owe you money from before, set an opening balance on their profile.`
               : "Your practice is ready. Head to your dashboard to get started."}
           </p>
 

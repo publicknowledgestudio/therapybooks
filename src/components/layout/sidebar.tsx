@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -17,13 +18,16 @@ import {
   GearSix,
   SignOut,
   List,
+  Eye,
+  EyeSlash,
 } from "@/components/ui/icons";
+import { usePrivacy } from "@/lib/privacy";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: SquaresFour },
   { label: "Clients", href: "/clients", icon: Users },
   { label: "Sessions", href: "/sessions", icon: CalendarBlank },
-  { label: "Transactions", href: "/transactions", icon: ArrowsLeftRight },
+  { label: "Bank Statement", href: "/statement", icon: ArrowsLeftRight },
   { label: "Invoices", href: "/invoices", icon: FileText },
   { label: "Therapists", href: "/therapists", icon: UserCheck },
 ];
@@ -58,6 +62,27 @@ function NavLink({
   );
 }
 
+function PrivacyToggle() {
+  const { isPrivate, togglePrivacy } = usePrivacy();
+  const Icon = isPrivate ? Eye : EyeSlash;
+  const label = isPrivate ? "Show Private Info" : "Hide Private Info";
+
+  return (
+    <button
+      onClick={togglePrivacy}
+      className={cn(
+        "flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+        isPrivate
+          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+          : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </button>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -77,9 +102,14 @@ export function Sidebar() {
     <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 w-56 bg-background border-r border-sidebar-border">
       {/* Logo */}
       <div className="px-4 py-4">
-        <span className="text-sm font-semibold text-foreground tracking-tight">
-          therapybooks
-        </span>
+        <Image
+          src="/therapybook-logo.png"
+          alt="therapybook"
+          width={140}
+          height={32}
+          className="h-6 w-auto"
+          priority
+        />
       </div>
 
       {/* Nav */}
@@ -96,6 +126,8 @@ export function Sidebar() {
 
         {/* Spacer pushes settings + sign out to bottom */}
         <div className="mt-auto" />
+
+        <PrivacyToggle />
 
         <NavLink
           href="/settings"
@@ -147,9 +179,13 @@ export function MobileNav() {
         <SheetContent side="left" className="w-56 p-0 bg-background">
           {/* Header */}
           <div className="px-4 py-4 border-b border-sidebar-border">
-            <span className="text-sm font-semibold text-foreground tracking-tight">
-              therapybooks
-            </span>
+            <Image
+              src="/therapybook-logo.png"
+              alt="therapybook"
+              width={140}
+              height={32}
+              className="h-6 w-auto"
+            />
           </div>
 
           {/* Nav */}
@@ -168,6 +204,8 @@ export function MobileNav() {
 
           {/* Footer */}
           <div className="border-t border-sidebar-border px-3 py-3 space-y-0.5">
+            <PrivacyToggle />
+
             <NavLink
               href="/settings"
               icon={GearSix}
