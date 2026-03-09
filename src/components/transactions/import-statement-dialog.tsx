@@ -260,6 +260,7 @@ export function ImportStatementDialog() {
         let category: string | undefined;
         let invoice_id: number | undefined;
         let contractor_id: number | undefined;
+        let client_id: number | undefined;
 
         for (const s of rowSuggs) {
           const sk = suggKey(key, s);
@@ -267,14 +268,15 @@ export function ImportStatementDialog() {
             if (s.category && !category) category = s.category;
             if (s.invoice_id) invoice_id = s.invoice_id;
             if (s.contractor_id) contractor_id = s.contractor_id;
+            if (s.client_id) client_id = s.client_id;
           }
         }
 
-        return { ...row, category, invoice_id, contractor_id };
+        return { ...row, category, invoice_id, contractor_id, client_id };
       });
 
       const taggedCount = rowsWithTags.filter(
-        (r) => r.category || r.invoice_id || r.contractor_id
+        (r) => r.category || r.invoice_id || r.contractor_id || r.client_id
       ).length;
 
       const result = await importTransactions(rowsWithTags, fileName);
@@ -471,7 +473,9 @@ export function ImportStatementDialog() {
                                           ? s.invoice_label
                                           : s.type === "contractor"
                                             ? `Salary → ${s.contractor_name}`
-                                            : s.category}
+                                            : s.client_name
+                                              ? `${s.client_name}`
+                                              : s.category}
                                       </Badge>
                                       {!isAccepted && (
                                         <>

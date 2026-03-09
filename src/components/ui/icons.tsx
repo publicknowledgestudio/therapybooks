@@ -44,6 +44,7 @@ export {
   TrendDown,
   TrendUp,
   UploadSimple,
+  User,
   UserCheck,
   Users,
   Wallet,

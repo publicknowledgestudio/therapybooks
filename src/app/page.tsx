@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,7 +50,18 @@ const PERMISSIONS = [
 
 export default function LandingPage() {
   const [error, setError] = useState("");
+  const router = useRouter();
   const supabase = createClient();
+
+  // Redirect to dashboard once auth completes (handles code exchange on this page)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
+        router.push("/dashboard");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [supabase, router]);
 
   async function handleGoogleSignIn() {
     const { error } = await supabase.auth.signInWithOAuth({

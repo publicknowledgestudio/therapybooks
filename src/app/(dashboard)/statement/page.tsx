@@ -1,7 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
-import { UploadSimple, ArrowsLeftRight } from "@/components/ui/icons";
+import { ArrowsLeftRight } from "@/components/ui/icons";
 import { EmptyState } from "@/components/empty-state";
+import { ImportStatementDialog } from "@/components/transactions/import-statement-dialog";
+import { TransactionList } from "@/components/transactions/transaction-list";
+
+interface Transaction {
+  id: number;
+  date: string;
+  narration: string | null;
+  amount: number;
+  balance: number | null;
+  reference: string | null;
+  category: string | null;
+  bank_file: string | null;
+  is_personal: boolean | null;
+  created_at: string;
+  client_payments: Array<{
+    id: number;
+    amount: number;
+    client: { id: number; name: string } | null;
+  }>;
+}
 
 export default async function StatementPage() {
   const supabase = await createClient();
@@ -9,15 +28,34 @@ export default async function StatementPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let items: { id: number }[] = [];
+  let transactions: Transaction[] = [];
 
   if (user) {
     const { data } = await supabase
       .from("transactions")
-      .select("*")
+      .select(
+        `
+        id,
+        date,
+        narration,
+        amount,
+        balance,
+        reference,
+        category,
+        bank_file,
+        is_personal,
+        created_at,
+        client_payments (
+          id,
+          amount,
+          client:clients ( id, name )
+        )
+      `
+      )
       .eq("user_id", user.id)
       .order("date", { ascending: false });
-    items = data ?? [];
+
+    transactions = (data as unknown as Transaction[]) ?? [];
   }
 
   return (
@@ -31,25 +69,17 @@ export default async function StatementPage() {
             Imported bank transactions and payment allocations
           </p>
         </div>
-        <Button variant="outline" size="sm">
-          <UploadSimple className="mr-1.5 h-4 w-4" />
-          Import Statement
-        </Button>
+        <ImportStatementDialog />
       </div>
 
-      {items.length === 0 ? (
+      {transactions.length === 0 ? (
         <EmptyState
           icon={ArrowsLeftRight}
           title="No transactions yet"
-          description="Import a bank statement to see your transactions and allocate payments."
-          action={{ label: "Import Statement", variant: "outline" }}
+          description="Import an HDFC bank statement (.xls) to see your transactions and match payments to clients."
         />
       ) : (
-        <div className="mt-6">
-          <p className="text-sm text-muted-foreground">
-            {items.length} transaction{items.length !== 1 ? "s" : ""}
-          </p>
-        </div>
+        <TransactionList transactions={transactions} />
       )}
     </div>
   );
