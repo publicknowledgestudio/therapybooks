@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { usePrivacy } from "@/lib/privacy";
 import { formatINR } from "@/lib/format";
 import {
@@ -41,6 +42,7 @@ function formatNextSession(dateStr: string | null): string {
 }
 
 export function ClientList({ clients }: { clients: ClientRow[] }) {
+  const router = useRouter();
   const { mask, isPrivate } = usePrivacy();
 
   return (
@@ -57,7 +59,11 @@ export function ClientList({ clients }: { clients: ClientRow[] }) {
         </TableHeader>
         <TableBody>
           {clients.map((client) => (
-            <TableRow key={client.id}>
+            <TableRow
+              key={client.id}
+              className="cursor-pointer hover:bg-accent/50"
+              onClick={() => router.push(`/clients/${client.id}`)}
+            >
               <TableCell className="font-medium">
                 {mask(client.name)}
               </TableCell>
