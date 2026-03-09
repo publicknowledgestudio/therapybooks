@@ -108,10 +108,10 @@ export default function TermsOfServicePage() {
           <p className="mt-2">
             For any questions about these terms, please reach out to{" "}
             <a
-              href="mailto:hello@therapybook.in"
+              href="mailto:gyan@publicknowledge.co"
               className="text-foreground underline underline-offset-2"
             >
-              hello@therapybook.in
+              gyan@publicknowledge.co
             </a>
             .
           </p>

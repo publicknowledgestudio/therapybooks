@@ -96,9 +96,15 @@ export default function PrivacyPolicyPage() {
             Your rights
           </h2>
           <p className="mt-2">
-            You can export or delete your data at any time from the Settings
-            page. If you delete your account, all associated data is permanently
-            removed from our systems within 30 days.
+            To request deletion of your data, email{" "}
+            <a
+              href="mailto:gyan@publicknowledge.co"
+              className="text-foreground underline underline-offset-2"
+            >
+              gyan@publicknowledge.co
+            </a>
+            . Once processed, all associated data is permanently removed from
+            our systems within 30 days.
           </p>
         </section>
 
@@ -109,10 +115,10 @@ export default function PrivacyPolicyPage() {
           <p className="mt-2">
             For any privacy-related questions, please reach out to{" "}
             <a
-              href="mailto:privacy@therapybook.in"
+              href="mailto:gyan@publicknowledge.co"
               className="text-foreground underline underline-offset-2"
             >
-              privacy@therapybook.in
+              gyan@publicknowledge.co
             </a>
             .
           </p>
