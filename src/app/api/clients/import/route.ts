@@ -11,6 +11,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Extract Google refresh token from the OAuth session so we can use it
+  // for background operations (e.g. pushing bookings to Google Calendar)
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const googleRefreshToken = session?.provider_refresh_token ?? null;
+
   const { contacts, calendarId } = await request.json();
 
   if (!Array.isArray(contacts) || contacts.length === 0) {
@@ -90,6 +97,7 @@ export async function POST(request: Request) {
       .update({
         therapist_id: therapistId,
         google_calendar_id: calendarId ?? null,
+        google_refresh_token: googleRefreshToken,
         booking_slug: slug,
         onboarding_completed: true,
       })
@@ -99,6 +107,7 @@ export async function POST(request: Request) {
       user_id: user.id,
       therapist_id: therapistId,
       google_calendar_id: calendarId ?? null,
+      google_refresh_token: googleRefreshToken,
       booking_slug: slug,
       onboarding_completed: true,
     });
