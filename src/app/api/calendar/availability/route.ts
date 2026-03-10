@@ -1,31 +1,12 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFreeBusy } from "@/lib/google-calendar";
+import { getAccessTokenFromRefresh } from "@/lib/google-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { google } from "googleapis";
 
 interface WorkingDay {
   start: string;
   end: string;
   enabled: boolean;
-}
-
-/**
- * Exchange a Google refresh token for a fresh access token.
- */
-async function getAccessTokenFromRefresh(
-  refreshToken: string,
-): Promise<string | null> {
-  try {
-    const oauth2 = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-    );
-    oauth2.setCredentials({ refresh_token: refreshToken });
-    const { credentials } = await oauth2.refreshAccessToken();
-    return credentials.access_token ?? null;
-  } catch {
-    return null;
-  }
 }
 
 export async function GET(request: NextRequest) {

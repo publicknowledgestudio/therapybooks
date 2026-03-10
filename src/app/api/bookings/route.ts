@@ -1,4 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { pushSessionToCalendar } from "@/lib/calendar-push";
+import { getAccessTokenFromRefresh } from "@/lib/google-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -122,6 +124,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Push to Google Calendar (fire-and-forget — don't block the response)
+  pushToCalendar(supabase, settings.user_id, session.id).catch((err) =>
+    console.error("Calendar push failed for booking:", err),
+  );
+
   return NextResponse.json({
     success: true,
     booking: {
@@ -133,4 +140,34 @@ export async function POST(request: NextRequest) {
       practiceName: settings.practice_name || "",
     },
   });
+}
+
+/**
+ * Fetch the therapist's Google refresh token, exchange it for an access token,
+ * and push the session to their Google Calendar.
+ */
+async function pushToCalendar(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  sessionId: number,
+) {
+  const { data: calSettings } = await supabase
+    .from("therapist_settings")
+    .select("google_refresh_token, outbound_sync_enabled")
+    .eq("user_id", userId)
+    .single();
+
+  if (!calSettings?.outbound_sync_enabled || !calSettings.google_refresh_token) {
+    return; // Calendar sync not configured — nothing to do
+  }
+
+  const accessToken = await getAccessTokenFromRefresh(
+    calSettings.google_refresh_token,
+  );
+  if (!accessToken) {
+    console.error("Could not refresh Google access token for user", userId);
+    return;
+  }
+
+  await pushSessionToCalendar(supabase, userId, sessionId, accessToken);
 }
