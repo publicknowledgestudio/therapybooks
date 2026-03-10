@@ -70,6 +70,10 @@ function formatStatusLabel(status: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function firstName(name: string): string {
+  return name.split(" ")[0];
+}
+
 function stripPhone(phone: string): string {
   return phone.replace(/\D/g, "");
 }
@@ -93,7 +97,7 @@ export function SessionList({
   function buildCancelMessage(session: SessionRow): string {
     const date = formatDate(session.date);
     const time = formatTime12h(session.startTime);
-    let msg = `Hi ${session.clientName}, I'm sorry but I need to cancel our session on ${date} at ${time}. I apologize for the inconvenience.`;
+    let msg = `Hi ${firstName(session.clientName)}, I'm sorry but I need to cancel our session on ${date} at ${time}. I apologize for the inconvenience.`;
     if (rebookUrl) {
       msg += `\n\nYou can rebook at your convenience here: ${rebookUrl}`;
     }
@@ -134,7 +138,7 @@ export function SessionList({
     const phone = stripPhone(session.clientPhone);
     const time = formatTime12h(session.startTime);
     const date = formatDate(session.date);
-    const message = `Hi ${session.clientName}, this is a reminder about your appointment on ${date} at ${time}. Looking forward to seeing you!`;
+    const message = `Hi ${firstName(session.clientName)}, this is a reminder about your appointment on ${date} at ${time}. Looking forward to seeing you!`;
     window.open(
       `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
       "_blank",

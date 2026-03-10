@@ -31,6 +31,10 @@ function formatTimeRange(startTime: string | null, endTime: string | null): stri
   return `${formatTime(startTime)} \u2013 ${formatTime(endTime)}`;
 }
 
+function firstName(name: string): string {
+  return name.split(" ")[0];
+}
+
 function stripPhone(phone: string): string {
   return phone.replace(/\D/g, "");
 }
@@ -76,7 +80,7 @@ export function AppointmentsToday({ sessions }: AppointmentsTodayProps) {
     if (!session.clientPhone || isPrivate) return;
     const phone = stripPhone(session.clientPhone);
     const time = formatTime(session.startTime);
-    const message = `Hi ${session.clientName}, this is a reminder about your appointment today at ${time}. Looking forward to seeing you!`;
+    const message = `Hi ${firstName(session.clientName)}, this is a reminder about your appointment today at ${time}. Looking forward to seeing you!`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
   }
 
