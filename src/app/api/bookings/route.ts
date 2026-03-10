@@ -124,10 +124,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Push to Google Calendar (fire-and-forget — don't block the response)
-  pushToCalendar(supabase, settings.user_id, session.id).catch((err) =>
-    console.error("Calendar push failed for booking:", err),
-  );
+  // Push to Google Calendar (await so it completes before Vercel shuts down the function)
+  try {
+    await pushToCalendar(supabase, settings.user_id, session.id);
+  } catch (err) {
+    console.error("Calendar push failed for booking:", err);
+    // Don't fail the booking response — the session is already created
+  }
 
   return NextResponse.json({
     success: true,
@@ -153,12 +156,23 @@ async function pushToCalendar(
 ) {
   const { data: calSettings } = await supabase
     .from("therapist_settings")
-    .select("google_refresh_token, outbound_sync_enabled")
+    .select("google_refresh_token, outbound_sync_enabled, google_calendar_id")
     .eq("user_id", userId)
     .single();
 
-  if (!calSettings?.outbound_sync_enabled || !calSettings.google_refresh_token) {
-    return; // Calendar sync not configured — nothing to do
+  if (!calSettings?.outbound_sync_enabled) {
+    console.log("Calendar push skipped: outbound_sync_enabled is false");
+    return;
+  }
+
+  if (!calSettings.google_refresh_token) {
+    console.log("Calendar push skipped: no google_refresh_token");
+    return;
+  }
+
+  if (!calSettings.google_calendar_id) {
+    console.log("Calendar push skipped: no google_calendar_id");
+    return;
   }
 
   const accessToken = await getAccessTokenFromRefresh(
@@ -169,5 +183,7 @@ async function pushToCalendar(
     return;
   }
 
-  await pushSessionToCalendar(supabase, userId, sessionId, accessToken);
+  console.log("Pushing session", sessionId, "to calendar", calSettings.google_calendar_id);
+  const result = await pushSessionToCalendar(supabase, userId, sessionId, accessToken);
+  console.log("Calendar push result:", result);
 }
