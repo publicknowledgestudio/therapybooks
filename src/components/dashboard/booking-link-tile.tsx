@@ -114,7 +114,7 @@ export function BookingLinkTile({ bookingSlug, userName }: BookingLinkTileProps)
 
   return (
     <>
-      <div className="rounded-lg border border-border p-5">
+      <div className="rounded-lg bg-sidebar-accent p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <LinkSimple className="size-4 text-muted-foreground" weight="regular" />

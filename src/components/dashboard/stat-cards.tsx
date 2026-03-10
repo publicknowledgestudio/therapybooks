@@ -64,7 +64,7 @@ export function StatCards(props: StatCardsProps) {
         const display = sensitive ? mask(formatted) : formatted;
 
         return (
-          <div key={key} className="rounded-lg border border-border p-5">
+          <div key={key} className="rounded-lg bg-sidebar-accent p-5">
             <div className="flex items-center gap-2">
               <Icon className="size-4 text-muted-foreground" weight="regular" />
               <p className="text-sm text-muted-foreground">{label}</p>

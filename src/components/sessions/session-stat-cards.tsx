@@ -23,7 +23,7 @@ export function SessionStatCards(props: SessionStatCardsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map(({ key, label }) => (
-        <div key={key} className="rounded-lg border border-border p-5">
+        <div key={key} className="rounded-lg bg-sidebar-accent p-5">
           <div className="flex items-center gap-2">
             <CalendarBlank className="size-4 text-muted-foreground" weight="regular" />
             <p className="text-sm text-muted-foreground">{label}</p>

@@ -147,7 +147,7 @@ export default async function ClientDetailPage({
         {balanceCards.map((card) => (
           <div
             key={card.label}
-            className="rounded-lg border border-border p-5"
+            className="rounded-lg bg-sidebar-accent p-5"
           >
             <div className="flex items-center gap-2">
               <card.icon className="size-4 text-muted-foreground" />

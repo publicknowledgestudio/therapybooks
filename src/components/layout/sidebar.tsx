@@ -52,7 +52,7 @@ function NavLink({
       className={cn(
         "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
         isActive
-          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+          ? "bg-white text-sidebar-accent-foreground font-medium"
           : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
       )}
     >
@@ -73,7 +73,7 @@ function PrivacyToggle() {
       className={cn(
         "flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
         isPrivate
-          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+          ? "bg-white text-sidebar-accent-foreground font-medium"
           : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       )}
     >
