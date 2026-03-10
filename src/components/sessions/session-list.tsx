@@ -1,10 +1,20 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { usePrivacy } from "@/lib/privacy";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -59,15 +69,18 @@ function stripPhone(phone: string): string {
 export function SessionList({ sessions }: { sessions: SessionRow[] }) {
   const { mask, isPrivate } = usePrivacy();
   const [isPending, startTransition] = useTransition();
+  const [cancelTarget, setCancelTarget] = useState<SessionRow | null>(null);
 
-  function handleCancel(session: SessionRow) {
+  function handleConfirmCancel() {
+    if (!cancelTarget) return;
     startTransition(async () => {
-      const result = await cancelSessionAction(session.id);
+      const result = await cancelSessionAction(cancelTarget.id);
       if (result.error) {
         toast.error(result.error);
       } else {
         toast.success("Session cancelled");
       }
+      setCancelTarget(null);
     });
   }
 
@@ -135,7 +148,7 @@ export function SessionList({ sessions }: { sessions: SessionRow[] }) {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      onClick={() => handleCancel(session)}
+                      onClick={() => setCancelTarget(session)}
                       disabled={isPending}
                       title="Cancel session"
                     >
@@ -163,6 +176,38 @@ export function SessionList({ sessions }: { sessions: SessionRow[] }) {
           ))}
         </TableBody>
       </Table>
+
+      <AlertDialog
+        open={!!cancelTarget}
+        onOpenChange={(open) => {
+          if (!open) setCancelTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel session?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will cancel{" "}
+              {cancelTarget
+                ? `${mask(cancelTarget.clientName)}'s session on ${formatDate(cancelTarget.date)} at ${formatTime12h(cancelTarget.startTime)}`
+                : "this session"}
+              . This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>
+              Keep session
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmCancel}
+              disabled={isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isPending ? "Cancelling…" : "Cancel session"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
