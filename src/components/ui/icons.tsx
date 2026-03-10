@@ -47,6 +47,7 @@ export {
   User,
   UserCheck,
   Users,
+  VideoCamera,
   Wallet,
   Warning,
   WarningCircle,

@@ -134,6 +134,9 @@ export async function syncCalendarEvents(
     const startTime = startDt.toTimeString().slice(0, 8); // HH:MM:SS
     const endTime = endDt ? endDt.toTimeString().slice(0, 8) : null;
 
+    // Detect session type from conference data
+    const hasVideo = !!(event.conferenceData || event.hangoutLink);
+
     // Insert session
     const { error } = await supabase.from("sessions").insert({
       user_id: userId,
@@ -143,6 +146,7 @@ export async function syncCalendarEvents(
       end_time: endTime,
       duration_minutes: durationMinutes,
       status: "scheduled",
+      session_type: hasVideo ? "video" : "in_person",
       source: "calendar_import",
       google_event_id: eventId,
       notes: event.description ?? null,

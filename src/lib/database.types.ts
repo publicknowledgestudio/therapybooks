@@ -243,6 +243,7 @@ export type Database = {
           is_chargeable: boolean
           notes: string | null
           rate: number | null
+          session_type: string
           source: string | null
           start_time: string | null
           status: Database["public"]["Enums"]["session_status"]
@@ -260,6 +261,7 @@ export type Database = {
           is_chargeable?: boolean
           notes?: string | null
           rate?: number | null
+          session_type?: string
           source?: string | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["session_status"]
@@ -277,6 +279,7 @@ export type Database = {
           is_chargeable?: boolean
           notes?: string | null
           rate?: number | null
+          session_type?: string
           source?: string | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["session_status"]
