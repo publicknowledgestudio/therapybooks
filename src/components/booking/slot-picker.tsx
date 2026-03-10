@@ -63,9 +63,10 @@ const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 export function SlotPicker({ slug, onSlotSelect }: SlotPickerProps) {
   const today = new Date();
+  const todayStr = toDateString(today);
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(todayStr);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [loading, setLoading] = useState(false);
@@ -137,7 +138,6 @@ export function SlotPicker({ slug, onSlotSelect }: SlotPickerProps) {
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
-  const todayStr = toDateString(today);
 
   // Determine if prev month button should be disabled (can't go before current month)
   const isPrevDisabled =
