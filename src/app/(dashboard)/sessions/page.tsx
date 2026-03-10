@@ -133,9 +133,9 @@ export default async function SessionsPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Sessions</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Appointments</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Track and manage therapy sessions
+            Track and manage your appointments
           </p>
         </div>
         <Button size="sm">

@@ -26,7 +26,7 @@ import { usePrivacy } from "@/lib/privacy";
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: SquaresFour },
   { label: "Clients", href: "/clients", icon: Users },
-  { label: "Sessions", href: "/sessions", icon: CalendarBlank },
+  { label: "Appointments", href: "/sessions", icon: CalendarBlank },
   { label: "Bank Statement", href: "/statement", icon: ArrowsLeftRight },
   { label: "Invoices", href: "/invoices", icon: FileText },
   // TODO: Re-add for multi-therapist / larger org support
