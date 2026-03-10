@@ -408,9 +408,10 @@ export default function OnboardingPage() {
         <div className="mt-8">
           <h1 className="text-2xl font-semibold">Add your active clients</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Select the clients you currently see. Contacts who appear in your
-            calendar are pre-selected. You can set opening balances for anyone
-            who owes you money from before.
+            therapybook has pre-selected your Google contacts who appear on your
+            calendar. Please select other clients that you are currently seeing
+            to import. You will be able to set opening balances for anyone who
+            has paid in advance or has a balance payment due.
           </p>
 
           <div className="mt-6">
