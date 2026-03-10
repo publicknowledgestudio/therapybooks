@@ -14,7 +14,7 @@ import {
   CalendarBlank,
   ArrowsLeftRight,
   FileText,
-  UserCheck,
+  // UserCheck, // TODO: Re-add for multi-therapist support
   GearSix,
   SignOut,
   List,
@@ -29,7 +29,8 @@ const NAV_ITEMS = [
   { label: "Sessions", href: "/sessions", icon: CalendarBlank },
   { label: "Bank Statement", href: "/statement", icon: ArrowsLeftRight },
   { label: "Invoices", href: "/invoices", icon: FileText },
-  { label: "Therapists", href: "/therapists", icon: UserCheck },
+  // TODO: Re-add for multi-therapist / larger org support
+  // { label: "Therapists", href: "/therapists", icon: UserCheck },
 ];
 
 function NavLink({
