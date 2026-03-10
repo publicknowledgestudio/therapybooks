@@ -46,10 +46,10 @@ export function ClientList({ clients }: { clients: ClientRow[] }) {
   const { mask, isPrivate } = usePrivacy();
 
   return (
-    <div className="mt-6 overflow-hidden rounded-lg border border-border">
+    <div className="mt-6 overflow-hidden rounded-lg">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/30">
+          <TableRow>
             <TableHead>Client Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Phone Number</TableHead>

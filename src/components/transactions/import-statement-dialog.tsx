@@ -401,7 +401,7 @@ export function ImportStatementDialog() {
                 </div>
               )}
 
-              <div className="rounded-md border flex-1 overflow-y-auto">
+              <div className="rounded-lg flex-1 overflow-y-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>

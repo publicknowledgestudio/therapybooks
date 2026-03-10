@@ -87,10 +87,10 @@ export function AppointmentsToday({ sessions }: AppointmentsTodayProps) {
   return (
     <div className="mt-8">
       <h2 className="text-lg font-semibold text-foreground">Today&apos;s Appointments</h2>
-      <div className="mt-4 overflow-hidden rounded-lg border border-border bg-[#f0eae4]">
+      <div className="mt-4 overflow-hidden rounded-lg bg-[#f0eae4]">
         <table className="w-full">
-          <thead>
-            <tr className="border-b border-border bg-muted/30">
+          <thead className="bg-white/50">
+            <tr>
               <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">
                 Time
               </th>
@@ -107,7 +107,7 @@ export function AppointmentsToday({ sessions }: AppointmentsTodayProps) {
           </thead>
           <tbody>
             {sessions.map((session) => (
-              <tr key={session.id} className="border-b border-border last:border-b-0 transition-colors hover:bg-white">
+              <tr key={session.id} className="transition-colors hover:bg-white even:bg-white/20">
                 <td className="px-4 py-3 text-sm tabular-nums text-foreground">
                   {formatTimeRange(session.startTime, session.endTime)}
                 </td>

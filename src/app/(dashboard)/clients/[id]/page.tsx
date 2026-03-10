@@ -172,10 +172,10 @@ export default async function ClientDetailPage({
             No sessions recorded yet.
           </p>
         ) : (
-          <div className="mt-4 overflow-hidden rounded-lg border border-border">
+          <div className="mt-4 overflow-hidden rounded-lg">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/30">
+                <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Time</TableHead>
                   <TableHead>Duration</TableHead>
@@ -220,10 +220,10 @@ export default async function ClientDetailPage({
             No payments received yet.
           </p>
         ) : (
-          <div className="mt-4 overflow-hidden rounded-lg border border-border">
+          <div className="mt-4 overflow-hidden rounded-lg">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/30">
+                <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                 </TableRow>

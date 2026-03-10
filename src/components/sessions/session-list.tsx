@@ -146,10 +146,10 @@ export function SessionList({
   }
 
   return (
-    <div className="mt-6 overflow-hidden rounded-lg border border-border">
+    <div className="mt-6 overflow-hidden rounded-lg">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/30">
+          <TableRow>
             <TableHead>Date</TableHead>
             <TableHead>Time</TableHead>
             <TableHead>Client</TableHead>

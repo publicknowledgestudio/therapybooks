@@ -74,7 +74,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
       </div>
 
       {/* Transaction table */}
-      <div className="rounded-md border">
+      <div className="overflow-hidden rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
