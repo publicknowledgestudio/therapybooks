@@ -16,6 +16,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -66,22 +74,59 @@ function stripPhone(phone: string): string {
   return phone.replace(/\D/g, "");
 }
 
-export function SessionList({ sessions }: { sessions: SessionRow[] }) {
+export function SessionList({
+  sessions,
+  bookingSlug,
+}: {
+  sessions: SessionRow[];
+  bookingSlug: string | null;
+}) {
   const { mask, isPrivate } = usePrivacy();
   const [isPending, startTransition] = useTransition();
   const [cancelTarget, setCancelTarget] = useState<SessionRow | null>(null);
+  const [notifyTarget, setNotifyTarget] = useState<SessionRow | null>(null);
+  const [notifyMessage, setNotifyMessage] = useState("");
+
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const rebookUrl = bookingSlug ? `${origin}/book/${bookingSlug}` : "";
+
+  function buildCancelMessage(session: SessionRow): string {
+    const date = formatDate(session.date);
+    const time = formatTime12h(session.startTime);
+    let msg = `Hi ${session.clientName}, I'm sorry but I need to cancel our session on ${date} at ${time}. I apologize for the inconvenience.`;
+    if (rebookUrl) {
+      msg += `\n\nYou can rebook at your convenience here: ${rebookUrl}`;
+    }
+    return msg;
+  }
 
   function handleConfirmCancel() {
     if (!cancelTarget) return;
+    const session = cancelTarget;
     startTransition(async () => {
-      const result = await cancelSessionAction(cancelTarget.id);
+      const result = await cancelSessionAction(session.id);
       if (result.error) {
         toast.error(result.error);
       } else {
         toast.success("Session cancelled");
+        // Show notify dialog if client has a phone number
+        if (session.clientPhone && !isPrivate) {
+          setNotifyMessage(buildCancelMessage(session));
+          setNotifyTarget(session);
+        }
       }
       setCancelTarget(null);
     });
+  }
+
+  function handleSendCancelNotification() {
+    if (!notifyTarget?.clientPhone) return;
+    const phone = stripPhone(notifyTarget.clientPhone);
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(notifyMessage)}`,
+      "_blank",
+    );
+    setNotifyTarget(null);
   }
 
   function handleSendReminder(session: SessionRow) {
@@ -208,6 +253,40 @@ export function SessionList({ sessions }: { sessions: SessionRow[] }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={!!notifyTarget}
+        onOpenChange={(open) => {
+          if (!open) setNotifyTarget(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Notify client</DialogTitle>
+            <DialogDescription>
+              Let {notifyTarget ? mask(notifyTarget.clientName) : "the client"}{" "}
+              know about the cancellation via WhatsApp.
+            </DialogDescription>
+          </DialogHeader>
+          <textarea
+            className="min-h-[140px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={notifyMessage}
+            onChange={(e) => setNotifyMessage(e.target.value)}
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setNotifyTarget(null)}
+            >
+              Skip
+            </Button>
+            <Button onClick={handleSendCancelNotification}>
+              <WhatsappLogo className="mr-1.5 size-4" weight="fill" />
+              Send on WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

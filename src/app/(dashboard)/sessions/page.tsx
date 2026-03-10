@@ -44,6 +44,7 @@ export default async function SessionsPage() {
   } = await supabase.auth.getUser();
 
   let onboardingCompleted = false;
+  let bookingSlug: string | null = null;
   let sessions: SessionRow[] = [];
   let thisWeek = 0;
   let lastWeek = 0;
@@ -53,10 +54,11 @@ export default async function SessionsPage() {
   if (user) {
     const { data: settings } = await supabase
       .from("therapist_settings")
-      .select("onboarding_completed")
+      .select("onboarding_completed, booking_slug")
       .eq("user_id", user.id)
       .single();
     onboardingCompleted = settings?.onboarding_completed ?? false;
+    bookingSlug = settings?.booking_slug ?? null;
 
     // Compute date ranges
     const thisWeekRange = getWeekRange(0);
@@ -167,7 +169,7 @@ export default async function SessionsPage() {
               lastMonth={lastMonth}
             />
           </div>
-          <SessionList sessions={sessions} />
+          <SessionList sessions={sessions} bookingSlug={bookingSlug} />
         </>
       )}
     </div>
