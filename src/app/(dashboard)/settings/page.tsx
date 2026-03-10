@@ -77,6 +77,7 @@ export default async function SettingsPage() {
             practiceName={settings?.practice_name ?? null}
             practiceAddress={settings?.practice_address ?? null}
             practicePhone={settings?.practice_phone ?? null}
+            defaultSessionRate={settings?.default_session_rate ?? null}
           />
         </section>
 

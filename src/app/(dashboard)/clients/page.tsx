@@ -11,15 +11,17 @@ export default async function ClientsPage() {
   } = await supabase.auth.getUser();
 
   let onboardingCompleted = false;
+  let defaultSessionRate: number | null = null;
   let clients: ClientRow[] = [];
 
   if (user) {
     const { data: settings } = await supabase
       .from("therapist_settings")
-      .select("onboarding_completed")
+      .select("onboarding_completed, default_session_rate")
       .eq("user_id", user.id)
       .single();
     onboardingCompleted = settings?.onboarding_completed ?? false;
+    defaultSessionRate = settings?.default_session_rate ?? null;
 
     // Fetch clients with their sessions and payments
     const { data: clientRows } = await supabase
@@ -80,7 +82,7 @@ export default async function ClientsPage() {
             Manage your client list and balances
           </p>
         </div>
-        <AddClientDialog />
+        <AddClientDialog defaultSessionRate={defaultSessionRate} />
       </div>
 
       {clients.length === 0 ? (

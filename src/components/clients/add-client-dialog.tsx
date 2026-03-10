@@ -15,15 +15,20 @@ import { Plus, CircleNotch } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { createClientAction } from "@/app/(dashboard)/clients/actions";
 
-export function AddClientDialog() {
+interface AddClientDialogProps {
+  defaultSessionRate?: number | null;
+}
+
+export function AddClientDialog({ defaultSessionRate }: AddClientDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
 
+  const defaultRate = defaultSessionRate ? defaultSessionRate.toString() : "";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [currentRate, setCurrentRate] = useState("");
+  const [currentRate, setCurrentRate] = useState(defaultRate);
   const [openingBalance, setOpeningBalance] = useState("");
   const [balanceType, setBalanceType] = useState<"owes" | "advance">("owes");
 
@@ -31,7 +36,7 @@ export function AddClientDialog() {
     setName("");
     setEmail("");
     setPhone("");
-    setCurrentRate("");
+    setCurrentRate(defaultRate);
     setOpeningBalance("");
     setBalanceType("owes");
     setError("");

@@ -13,6 +13,7 @@ const practiceProfileSchema = z.object({
   practice_name: z.string().optional(),
   practice_address: z.string().optional(),
   practice_phone: z.string().optional(),
+  default_session_rate: z.union([z.number(), z.nan()]).optional(),
 });
 
 type PracticeProfileValues = z.infer<typeof practiceProfileSchema>;
@@ -21,12 +22,14 @@ type PracticeProfileFormProps = {
   practiceName: string | null;
   practiceAddress: string | null;
   practicePhone: string | null;
+  defaultSessionRate: number | null;
 };
 
 export function PracticeProfileForm({
   practiceName,
   practiceAddress,
   practicePhone,
+  defaultSessionRate,
 }: PracticeProfileFormProps) {
   const {
     register,
@@ -38,14 +41,23 @@ export function PracticeProfileForm({
       practice_name: practiceName ?? "",
       practice_address: practiceAddress ?? "",
       practice_phone: practicePhone ?? "",
+      default_session_rate: defaultSessionRate ?? undefined,
     },
   });
 
   async function onSubmit(data: PracticeProfileValues) {
+    const payload = {
+      ...data,
+      default_session_rate:
+        data.default_session_rate && !isNaN(data.default_session_rate)
+          ? data.default_session_rate
+          : null,
+    };
+
     const res = await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
@@ -82,6 +94,20 @@ export function PracticeProfileForm({
             placeholder="e.g. +91 98765 43210"
             {...register("practice_phone")}
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="default_session_rate">Session Rate (INR)</Label>
+          <Input
+            id="default_session_rate"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="e.g. 2000"
+            {...register("default_session_rate", { valueAsNumber: true })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Default rate for new clients. Can be adjusted on each client&apos;s profile.
+          </p>
         </div>
       </div>
 

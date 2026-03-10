@@ -300,6 +300,7 @@ export type Database = {
           break_between_minutes: number
           cancellation_window_hours: number
           created_at: string
+          default_session_rate: number | null
           google_calendar_id: string | null
           google_refresh_token: string | null
           id: number
@@ -320,6 +321,7 @@ export type Database = {
           break_between_minutes?: number
           cancellation_window_hours?: number
           created_at?: string
+          default_session_rate?: number | null
           google_calendar_id?: string | null
           google_refresh_token?: string | null
           id?: number
@@ -340,6 +342,7 @@ export type Database = {
           break_between_minutes?: number
           cancellation_window_hours?: number
           created_at?: string
+          default_session_rate?: number | null
           google_calendar_id?: string | null
           google_refresh_token?: string | null
           id?: number
