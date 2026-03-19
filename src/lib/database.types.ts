@@ -423,6 +423,7 @@ export type Database = {
           narration: string | null
           reference: string | null
           source: string | null
+          type: string
           user_id: string
         }
         Insert: {
@@ -438,6 +439,7 @@ export type Database = {
           narration?: string | null
           reference?: string | null
           source?: string | null
+          type?: string
           user_id: string
         }
         Update: {
@@ -453,6 +455,7 @@ export type Database = {
           narration?: string | null
           reference?: string | null
           source?: string | null
+          type?: string
           user_id?: string
         }
         Relationships: []
