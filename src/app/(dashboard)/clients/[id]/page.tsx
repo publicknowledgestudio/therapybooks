@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { CaretLeft, CurrencyInr, Wallet, Receipt } from "@/components/ui/icons";
 import { ClientProfile } from "@/components/clients/client-profile";
+import { ReallocateButton } from "@/components/clients/reallocate-button";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   scheduled: "outline",
@@ -235,7 +236,10 @@ export default async function ClientDetailPage({
 
       {/* Payment History */}
       <div className="mt-10">
-        <h2 className="text-lg font-medium text-foreground">Payments</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-medium text-foreground">Payments</h2>
+          <ReallocateButton clientId={client.id} />
+        </div>
         {payments.length === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">
             No payments received yet.
