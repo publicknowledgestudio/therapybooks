@@ -18,28 +18,33 @@ export async function GET(request: Request) {
         } = await supabase.auth.getSession();
         const refreshToken = session?.provider_refresh_token;
         const userId = session?.user?.id;
+        const email = session?.user?.email;
 
-        if (refreshToken && userId) {
-          // Check if google_calendar_id is already set
+        if (userId) {
+          // Check current settings
           const { data: existing } = await supabase
             .from("therapist_settings")
             .select("google_calendar_id")
             .eq("user_id", userId)
             .single();
 
-          const updates: Record<string, string> = {
-            google_refresh_token: refreshToken,
-          };
+          const updates: Record<string, string | null> = {};
 
-          // Auto-set calendar ID to primary (email) if not already configured
-          if (!existing?.google_calendar_id && session?.user?.email) {
-            updates.google_calendar_id = session.user.email;
+          if (refreshToken) {
+            updates.google_refresh_token = refreshToken;
           }
 
-          await supabase
-            .from("therapist_settings")
-            .update(updates)
-            .eq("user_id", userId);
+          // Auto-set calendar ID to primary (email) if not already configured
+          if (!existing?.google_calendar_id && email) {
+            updates.google_calendar_id = email;
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await supabase
+              .from("therapist_settings")
+              .update(updates)
+              .eq("user_id", userId);
+          }
         }
       } catch (err) {
         // Non-critical — don't block the redirect
