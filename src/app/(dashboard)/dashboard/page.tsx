@@ -27,7 +27,7 @@ export default async function DashboardPage() {
   const monthStart = `${today.slice(0, 7)}-01`;
 
   // Run all queries in parallel
-  const [settingsResult, todaySessionsResult, activeClientsResult, monthSessionsResult, monthPaymentsResult, lastSyncResult] =
+  const [settingsResult, todaySessionsResult, activeClientsResult, monthSessionsResult, monthPaymentsResult, lastSyncResult, balanceClientsResult] =
     await Promise.all([
       supabase
         .from("therapist_settings")
@@ -74,6 +74,15 @@ export default async function DashboardPage() {
         .order("created_at", { ascending: false })
         .limit(1)
         .single(),
+
+      // All clients with sessions and payments for outstanding balance calc
+      supabase
+        .from("clients")
+        .select(
+          "opening_balance, sessions(rate, status), client_payments(amount)"
+        )
+        .eq("user_id", user.id)
+        .eq("is_active", true),
     ]);
 
   const onboardingCompleted = settingsResult.data?.onboarding_completed ?? false;
@@ -112,6 +121,25 @@ export default async function DashboardPage() {
     })
     .reduce((sum, p) => sum + p.amount, 0);
 
+  // Outstanding = sum of positive balances across all active clients
+  const outstandingBalances = (
+    (balanceClientsResult.data ?? []) as Array<{
+      opening_balance: number;
+      sessions: Array<{ rate: number | null; status: string }>;
+      client_payments: Array<{ amount: number }>;
+    }>
+  ).reduce((total, c) => {
+    const charged = (c.sessions ?? [])
+      .filter((s) => s.status !== "cancelled")
+      .reduce((sum, s) => sum + (s.rate ?? 0), 0);
+    const paid = (c.client_payments ?? []).reduce(
+      (sum, p) => sum + p.amount,
+      0
+    );
+    const balance = c.opening_balance + charged - paid;
+    return total + Math.max(0, balance);
+  }, 0);
+
   return (
     <div>
       <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
@@ -122,7 +150,7 @@ export default async function DashboardPage() {
           activeClients={activeClients}
           sessionsThisMonth={sessionsThisMonth}
           revenueThisMonth={revenueThisMonth}
-          outstandingBalances={0}
+          outstandingBalances={outstandingBalances}
         />
       </div>
 

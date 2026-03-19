@@ -29,8 +29,11 @@ const NAV_ITEMS = [
   { label: "Clients", href: "/clients", icon: Users },
   { label: "Appointments", href: "/sessions", icon: CalendarBlank },
   { label: "Bank Statement", href: "/statement", icon: ArrowsLeftRight },
-  { label: "Invoices", href: "/invoices", icon: FileText },
   { label: "Booking Link", href: "/booking-link", icon: LinkSimple },
+];
+
+const COMING_SOON_ITEMS = [
+  { label: "Invoices", href: "/invoices", icon: FileText },
   { label: "Therapists", href: "/therapists", icon: UserCheck },
 ];
 
@@ -128,6 +131,18 @@ export function Sidebar() {
           />
         ))}
 
+        <div className="my-2 border-t border-sidebar-border" />
+
+        {COMING_SOON_ITEMS.map((item) => (
+          <NavLink
+            key={item.href}
+            href={item.href}
+            icon={item.icon}
+            label={item.label}
+            isActive={isActive(item.href)}
+          />
+        ))}
+
         {/* Spacer pushes settings + sign out to bottom */}
         <div className="mt-auto" />
 
@@ -197,6 +212,19 @@ export function MobileNav() {
           {/* Nav */}
           <nav className="flex-1 flex flex-col px-3 py-3 space-y-0.5">
             {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.href}
+                href={item.href}
+                icon={item.icon}
+                label={item.label}
+                isActive={isActive(item.href)}
+                onClick={() => setOpen(false)}
+              />
+            ))}
+
+            <div className="my-2 border-t border-sidebar-border" />
+
+            {COMING_SOON_ITEMS.map((item) => (
               <NavLink
                 key={item.href}
                 href={item.href}
