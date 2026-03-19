@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { syncCalendarEvents } from "@/lib/calendar-sync";
+import { getAccessTokenFromRefresh } from "@/lib/google-auth";
 import { NextResponse } from "next/server";
 
 export async function POST() {
@@ -12,22 +13,10 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Get the user's session for provider_token
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session?.provider_token) {
-    return NextResponse.json(
-      { error: "No Google token available. Please re-authenticate." },
-      { status: 401 },
-    );
-  }
-
-  // Get therapist settings for calendar ID
+  // Get therapist settings for calendar ID and refresh token
   const { data: settings } = await supabase
     .from("therapist_settings")
-    .select("google_calendar_id")
+    .select("google_calendar_id, google_refresh_token")
     .eq("user_id", user.id)
     .single();
 
@@ -38,11 +27,31 @@ export async function POST() {
     );
   }
 
+  // Try provider_token from session first, fall back to refresh token
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  let accessToken = session?.provider_token ?? null;
+
+  if (!accessToken && settings.google_refresh_token) {
+    accessToken = await getAccessTokenFromRefresh(
+      settings.google_refresh_token,
+    );
+  }
+
+  if (!accessToken) {
+    return NextResponse.json(
+      { error: "Google token expired. Please sign out and sign in again with Google." },
+      { status: 401 },
+    );
+  }
+
   try {
     const result = await syncCalendarEvents(
       supabase,
       user.id,
-      session.provider_token,
+      accessToken,
       settings.google_calendar_id,
     );
 

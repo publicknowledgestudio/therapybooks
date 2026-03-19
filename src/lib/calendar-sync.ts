@@ -129,10 +129,27 @@ export async function syncCalendarEvents(
         ? Math.round((endDt.getTime() - startDt.getTime()) / 60000)
         : null;
 
-    // Format date and times
-    const date = startDt.toISOString().split("T")[0];
-    const startTime = startDt.toTimeString().slice(0, 8); // HH:MM:SS
-    const endTime = endDt ? endDt.toTimeString().slice(0, 8) : null;
+    // Format date and times in IST (Asia/Kolkata)
+    const istOptions: Intl.DateTimeFormatOptions = {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    };
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    };
+    // Format date as YYYY-MM-DD
+    const dateParts = startDt.toLocaleDateString("en-CA", dateOptions); // en-CA gives YYYY-MM-DD
+    const date = dateParts;
+    const startTime = startDt.toLocaleTimeString("en-GB", istOptions); // HH:MM:SS
+    const endTime = endDt
+      ? endDt.toLocaleTimeString("en-GB", istOptions)
+      : null;
 
     // Detect session type from conference data
     const hasVideo = !!(event.conferenceData || event.hangoutLink);

@@ -65,8 +65,8 @@ export async function createCalendarEvent(
     requestBody: {
       summary: event.summary,
       description: event.description,
-      start: { dateTime: event.start },
-      end: { dateTime: event.end },
+      start: { dateTime: event.start, timeZone: "Asia/Kolkata" },
+      end: { dateTime: event.end, timeZone: "Asia/Kolkata" },
     },
   });
   return res.data.id ?? null;
@@ -88,8 +88,10 @@ export async function updateCalendarEvent(
   if (event.summary) requestBody.summary = event.summary;
   if (event.description !== undefined)
     requestBody.description = event.description;
-  if (event.start) requestBody.start = { dateTime: event.start };
-  if (event.end) requestBody.end = { dateTime: event.end };
+  if (event.start)
+    requestBody.start = { dateTime: event.start, timeZone: "Asia/Kolkata" };
+  if (event.end)
+    requestBody.end = { dateTime: event.end, timeZone: "Asia/Kolkata" };
 
   await calendar.events.patch({
     calendarId,

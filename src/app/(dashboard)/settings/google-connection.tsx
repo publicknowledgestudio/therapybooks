@@ -53,9 +53,13 @@ export function GoogleConnection({
         throw new Error("Sync failed");
       }
       const data = await res.json();
-      toast.success(
-        `Synced ${data.synced ?? 0} event${(data.synced ?? 0) !== 1 ? "s" : ""}`
-      );
+      const created = data.created ?? 0;
+      const skipped = data.skipped ?? 0;
+      const unmatched = data.unmatched ?? 0;
+      const parts = [`${created} new`];
+      if (skipped > 0) parts.push(`${skipped} skipped`);
+      if (unmatched > 0) parts.push(`${unmatched} unmatched`);
+      toast.success(`Calendar sync: ${parts.join(", ")}`);
     } catch {
       toast.error("Failed to sync calendar");
     } finally {
