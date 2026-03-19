@@ -4,6 +4,14 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  const { pathname } = request.nextUrl;
+
+  // Skip auth refresh for the OAuth callback — the callback handles its own
+  // session exchange and stale refresh tokens in middleware would corrupt it.
+  if (pathname.startsWith("/api/auth")) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -29,12 +37,9 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
-
   const publicPaths = [
     "/book",
     "/my-appointments",
-    "/api/auth",
     "/api/calendar/availability",
     "/api/bookings",
     "/api/client-portal",
