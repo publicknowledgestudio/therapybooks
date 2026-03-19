@@ -50,17 +50,27 @@ export async function syncCalendarEvents(
     existingSessions?.map((s) => s.google_event_id) ?? [],
   );
 
+  // Get default session rate from settings
+  const { data: settings } = await supabase
+    .from("therapist_settings")
+    .select("default_session_rate")
+    .eq("user_id", userId)
+    .single();
+  const defaultRate = settings?.default_session_rate ?? null;
+
   // Get all clients for email / name matching
   const { data: clients } = await supabase
     .from("clients")
-    .select("id, email, name")
+    .select("id, email, name, current_rate")
     .eq("user_id", userId);
 
   const clientsByEmail = new Map<string, number>();
   const clientsByName = new Map<string, number>();
+  const clientRates = new Map<number, number | null>();
   for (const client of clients ?? []) {
     if (client.email) clientsByEmail.set(client.email.toLowerCase(), client.id);
     if (client.name) clientsByName.set(client.name.toLowerCase(), client.id);
+    clientRates.set(client.id, client.current_rate);
   }
 
   for (const [eventId, event] of uniqueEvents) {
@@ -154,6 +164,9 @@ export async function syncCalendarEvents(
     // Detect session type from conference data
     const hasVideo = !!(event.conferenceData || event.hangoutLink);
 
+    // Use client's rate, falling back to default session rate
+    const rate = clientRates.get(clientId) ?? defaultRate;
+
     // Insert session
     const { error } = await supabase.from("sessions").insert({
       user_id: userId,
@@ -162,6 +175,7 @@ export async function syncCalendarEvents(
       start_time: startTime,
       end_time: endTime,
       duration_minutes: durationMinutes,
+      rate,
       status: "scheduled",
       session_type: hasVideo ? "video" : "in_person",
       source: "calendar_import",
