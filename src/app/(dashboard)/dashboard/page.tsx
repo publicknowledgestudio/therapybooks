@@ -122,13 +122,12 @@ export default async function DashboardPage() {
         <BookingLinkTile bookingSlug={bookingSlug} userName={userName} />
       </div>
 
-      {hasCalendar && (
-        <div className="mt-8">
-          <CalendarSyncBar lastSyncedAt={lastSyncedAt} />
-        </div>
-      )}
-
-      <AppointmentsToday sessions={todaySessions} />
+      <AppointmentsToday
+        sessions={todaySessions}
+        headerRight={
+          hasCalendar ? <CalendarSyncBar lastSyncedAt={lastSyncedAt} /> : undefined
+        }
+      />
 
       {unseenChangelog.length > 0 && (
         <WhatsNewModal

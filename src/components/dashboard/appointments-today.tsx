@@ -15,6 +15,7 @@ export interface SessionItem {
 
 interface AppointmentsTodayProps {
   sessions: SessionItem[];
+  headerRight?: React.ReactNode;
 }
 
 function formatTime(time: string | null): string {
@@ -59,13 +60,16 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function AppointmentsToday({ sessions }: AppointmentsTodayProps) {
+export function AppointmentsToday({ sessions, headerRight }: AppointmentsTodayProps) {
   const { isPrivate, mask } = usePrivacy();
 
   if (sessions.length === 0) {
     return (
       <div className="mt-8">
-        <h2 className="text-lg font-semibold text-foreground">Today&apos;s Appointments</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">Today&apos;s Appointments</h2>
+          {headerRight}
+        </div>
         <div className="mt-4 rounded-lg border border-border p-8 text-center">
           <CalendarBlank className="mx-auto size-8 text-muted-foreground" weight="regular" />
           <p className="mt-2 text-sm text-muted-foreground">
@@ -86,7 +90,10 @@ export function AppointmentsToday({ sessions }: AppointmentsTodayProps) {
 
   return (
     <div className="mt-8">
-      <h2 className="text-lg font-semibold text-foreground">Today&apos;s Appointments</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">Today&apos;s Appointments</h2>
+        {headerRight}
+      </div>
       <div className="mt-4 overflow-hidden rounded-lg bg-[#f0eae4]">
         <table className="w-full text-sm">
           <thead className="bg-white/50">
