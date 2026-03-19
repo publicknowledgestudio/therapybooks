@@ -307,6 +307,7 @@ export type Database = {
           google_calendar_id: string | null
           google_refresh_token: string | null
           id: number
+          last_seen_changelog: string | null
           onboarding_completed: boolean
           outbound_sync_enabled: boolean
           practice_address: string | null
@@ -328,6 +329,7 @@ export type Database = {
           google_calendar_id?: string | null
           google_refresh_token?: string | null
           id?: number
+          last_seen_changelog?: string | null
           onboarding_completed?: boolean
           outbound_sync_enabled?: boolean
           practice_address?: string | null
@@ -349,6 +351,7 @@ export type Database = {
           google_calendar_id?: string | null
           google_refresh_token?: string | null
           id?: number
+          last_seen_changelog?: string | null
           onboarding_completed?: boolean
           outbound_sync_enabled?: boolean
           practice_address?: string | null
