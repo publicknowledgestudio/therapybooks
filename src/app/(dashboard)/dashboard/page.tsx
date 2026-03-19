@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { StatCards } from "@/components/dashboard/stat-cards";
 import { AppointmentsToday } from "@/components/dashboard/appointments-today";
 import { OnboardingPrompt } from "@/components/dashboard/onboarding-prompt";
-import { BookingLinkTile } from "@/components/dashboard/booking-link-tile";
 import { WhatsNewModal } from "@/components/dashboard/whats-new-modal";
 import { CalendarSyncBar } from "@/components/dashboard/calendar-sync-bar";
 import { getUnseenEntries, LATEST_CHANGELOG_ID } from "@/lib/changelog";
@@ -32,7 +31,7 @@ export default async function DashboardPage() {
     await Promise.all([
       supabase
         .from("therapist_settings")
-        .select("onboarding_completed, booking_slug, last_seen_changelog, google_calendar_id")
+        .select("onboarding_completed, last_seen_changelog, google_calendar_id")
         .eq("user_id", user.id)
         .single(),
 
@@ -72,14 +71,10 @@ export default async function DashboardPage() {
     ]);
 
   const onboardingCompleted = settingsResult.data?.onboarding_completed ?? false;
-  const bookingSlug = settingsResult.data?.booking_slug ?? null;
   const lastSeenChangelog = settingsResult.data?.last_seen_changelog ?? null;
   const unseenChangelog = getUnseenEntries(lastSeenChangelog);
   const hasCalendar = !!settingsResult.data?.google_calendar_id;
   const lastSyncedAt = lastSyncResult.data?.created_at ?? null;
-
-  const userName =
-    user.user_metadata?.full_name ?? user.user_metadata?.name ?? null;
 
   // Map today's sessions for the client component
   const todaySessions = (todaySessionsResult.data ?? []).map((s) => {
@@ -117,10 +112,6 @@ export default async function DashboardPage() {
       </div>
 
       {!onboardingCompleted && <OnboardingPrompt />}
-
-      <div className="mt-6">
-        <BookingLinkTile bookingSlug={bookingSlug} userName={userName} />
-      </div>
 
       <AppointmentsToday
         sessions={todaySessions}
