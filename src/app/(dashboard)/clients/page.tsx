@@ -3,6 +3,7 @@ import { Users } from "@/components/ui/icons";
 import { EmptyState } from "@/components/empty-state";
 import { ClientList, type ClientRow } from "@/components/clients/client-list";
 import { AddClientDialog } from "@/components/clients/add-client-dialog";
+import { ImportContactsDialog } from "@/components/clients/import-contacts-dialog";
 
 export default async function ClientsPage() {
   const supabase = await createClient();
@@ -82,7 +83,10 @@ export default async function ClientsPage() {
             Manage your client list and balances
           </p>
         </div>
-        <AddClientDialog defaultSessionRate={defaultSessionRate} />
+        <div className="flex items-center gap-2">
+          <ImportContactsDialog />
+          <AddClientDialog defaultSessionRate={defaultSessionRate} />
+        </div>
       </div>
 
       {clients.length === 0 ? (
