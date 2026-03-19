@@ -195,7 +195,7 @@ export type Database = {
           created_at: string
           id: number
           session_id: number
-          transaction_id: number
+          transaction_id: number | null
           user_id: string
         }
         Insert: {
@@ -203,7 +203,7 @@ export type Database = {
           created_at?: string
           id?: number
           session_id: number
-          transaction_id: number
+          transaction_id?: number | null
           user_id: string
         }
         Update: {
@@ -211,7 +211,7 @@ export type Database = {
           created_at?: string
           id?: number
           session_id?: number
-          transaction_id?: number
+          transaction_id?: number | null
           user_id?: string
         }
         Relationships: [
