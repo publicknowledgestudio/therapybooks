@@ -27,7 +27,7 @@ export default async function DashboardPage() {
   const monthStart = `${today.slice(0, 7)}-01`;
 
   // Run all queries in parallel
-  const [settingsResult, todaySessionsResult, activeClientsResult, monthSessionsResult, lastSyncResult] =
+  const [settingsResult, todaySessionsResult, activeClientsResult, monthSessionsResult, monthPaymentsResult, lastSyncResult] =
     await Promise.all([
       supabase
         .from("therapist_settings")
@@ -58,6 +58,12 @@ export default async function DashboardPage() {
         .gte("date", monthStart)
         .lte("date", today)
         .in("status", ["scheduled", "confirmed"]),
+
+      // Payments received this month (from client_payments via transactions)
+      supabase
+        .from("client_payments")
+        .select("amount, transactions(date)")
+        .eq("user_id", user.id),
 
       // Last calendar sync time (most recent calendar-imported session)
       supabase
@@ -93,9 +99,18 @@ export default async function DashboardPage() {
   const activeClients = activeClientsResult.count ?? 0;
   const monthSessions = monthSessionsResult.data ?? [];
   const sessionsThisMonth = monthSessions.length;
-  const revenueThisMonth = monthSessions
-    .filter((s) => s.is_chargeable && s.rate)
-    .reduce((sum, s) => sum + (s.rate ?? 0), 0);
+
+  // Income = actual payments received this month (by transaction date)
+  const allPayments = (monthPaymentsResult.data ?? []) as Array<{
+    amount: number;
+    transactions: { date: string } | null;
+  }>;
+  const revenueThisMonth = allPayments
+    .filter((p) => {
+      const txnDate = p.transactions?.date;
+      return txnDate && txnDate >= monthStart && txnDate <= today;
+    })
+    .reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <div>

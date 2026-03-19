@@ -13,7 +13,7 @@ interface StatCardsProps {
 
 function currentMonthSubtitle(): string {
   const month = new Date().toLocaleString("en-IN", { month: "short" });
-  return `All income received since 1 ${month}`;
+  return `All payments collected since 1 ${month}`;
 }
 
 const cards: {
