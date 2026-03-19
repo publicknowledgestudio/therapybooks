@@ -12,7 +12,11 @@ export default function DashboardLayout({
         <Sidebar />
         <div className="md:pl-56">
           <MobileNav />
-          <main className="px-6 py-8 md:px-10 md:py-10">{children}</main>
+          <main className="px-6 py-8 md:px-10 md:py-10">
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {children}
+            </div>
+          </main>
         </div>
       </div>
     </PrivacyProvider>

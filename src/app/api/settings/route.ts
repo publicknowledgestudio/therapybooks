@@ -1,15 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-
-const DEFAULT_WORKING_HOURS = {
-  mon: { start: "09:00", end: "18:00", enabled: true },
-  tue: { start: "09:00", end: "18:00", enabled: true },
-  wed: { start: "09:00", end: "18:00", enabled: true },
-  thu: { start: "09:00", end: "18:00", enabled: true },
-  fri: { start: "09:00", end: "18:00", enabled: true },
-  sat: { start: "09:00", end: "13:00", enabled: false },
-  sun: { start: "09:00", end: "13:00", enabled: false },
-};
+import { DEFAULT_WORKING_HOURS } from "@/lib/constants";
 
 export async function GET() {
   const supabase = await createClient();

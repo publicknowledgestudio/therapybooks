@@ -11,16 +11,16 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   CaretLeft,
   CaretRight,
   User,
   MagnifyingGlass,
-  Eye,
-  EyeSlash,
 } from "@/components/ui/icons";
 import { formatINR, formatDate } from "@/lib/format";
 import { togglePersonal } from "@/app/(dashboard)/statement/actions";
+import { usePersonalFilter } from "./personal-toggle";
 
 interface Transaction {
   id: number;
@@ -50,7 +50,7 @@ const PAGE_SIZE = 50;
 export function TransactionList({ transactions }: TransactionListProps) {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
-  const [showPersonal, setShowPersonal] = useState(false);
+  const { showPersonal } = usePersonalFilter();
 
   // Filter transactions
   const filtered = useMemo(() => {
@@ -93,8 +93,6 @@ export function TransactionList({ transactions }: TransactionListProps) {
   const linkedCount = filtered.filter(
     (t) => t.client_payments.length > 0
   ).length;
-  const personalCount = transactions.filter((t) => t.is_personal).length;
-
   // Reset page when search changes
   function handleSearchChange(value: string) {
     setSearch(value);
@@ -107,35 +105,16 @@ export function TransactionList({ transactions }: TransactionListProps) {
 
   return (
     <div className="mt-6 space-y-4">
-      {/* Search + filters bar */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <MagnifyingGlass className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search transactions..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="h-9 w-full rounded-md border bg-transparent pl-8 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-        </div>
-
-        <Button
-          variant={showPersonal ? "default" : "outline"}
-          size="sm"
-          onClick={() => {
-            setShowPersonal(!showPersonal);
-            setPage(0);
-          }}
-          className="h-9 text-xs gap-1.5"
-        >
-          {showPersonal ? (
-            <Eye className="h-3.5 w-3.5" />
-          ) : (
-            <EyeSlash className="h-3.5 w-3.5" />
-          )}
-          Personal ({personalCount})
-        </Button>
+      {/* Search bar */}
+      <div className="relative">
+        <MagnifyingGlass className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Search transactions..."
+          value={search}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="h-9 w-full rounded-md border bg-white pl-8 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+        />
       </div>
 
       {/* Summary bar */}
@@ -222,25 +201,22 @@ export function TransactionList({ transactions }: TransactionListProps) {
                     </Badge>
                   ) : null}
                 </TableCell>
-                <TableCell className="text-center">
-                  <button
-                    type="button"
-                    onClick={() =>
+                <TableCell
+                  className="text-center cursor-pointer"
+                  onClick={() => handleTogglePersonal(txn.id, !!txn.is_personal)}
+                >
+                  <Checkbox
+                    checked={!!txn.is_personal}
+                    onCheckedChange={() =>
                       handleTogglePersonal(txn.id, !!txn.is_personal)
                     }
-                    className={`inline-flex h-5 w-5 items-center justify-center rounded text-xs transition-colors ${
-                      txn.is_personal
-                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                        : "text-muted-foreground/40 hover:bg-muted hover:text-muted-foreground"
-                    }`}
-                    title={
+                    className="cursor-pointer transition-colors hover:border-amber-400 hover:bg-amber-50 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+                    aria-label={
                       txn.is_personal
                         ? "Marked as personal — click to unmark"
                         : "Mark as personal"
                     }
-                  >
-                    P
-                  </button>
+                  />
                 </TableCell>
               </TableRow>
             ))}

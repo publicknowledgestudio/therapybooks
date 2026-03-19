@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { RecordCashPaymentDialog } from "@/components/transactions/record-cash-payment-dialog";
+import { PersonalFilterProvider, PersonalToggle } from "@/components/transactions/personal-toggle";
 
 interface Transaction {
   id: number;
@@ -63,36 +64,39 @@ export default async function StatementPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">
-            Bank Statement
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Imported bank transactions and payment allocations
-          </p>
+    <PersonalFilterProvider>
+      <div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">
+              Bank Statement
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Imported bank transactions and payment allocations
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {transactions.length > 0 && <PersonalToggle />}
+            <RecordCashPaymentDialog />
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/statement/import">
+                <UploadSimple className="mr-2 h-4 w-4" />
+                Import Statement
+              </Link>
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <RecordCashPaymentDialog />
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/statement/import">
-              <UploadSimple className="mr-2 h-4 w-4" />
-              Import Statement
-            </Link>
-          </Button>
-        </div>
-      </div>
 
-      {transactions.length === 0 ? (
-        <EmptyState
-          icon={ArrowsLeftRight}
-          title="No transactions yet"
-          description="Import an HDFC bank statement (.xls) to see your transactions and match payments to clients."
-        />
-      ) : (
-        <TransactionList transactions={transactions} />
-      )}
-    </div>
+        {transactions.length === 0 ? (
+          <EmptyState
+            icon={ArrowsLeftRight}
+            title="No transactions yet"
+            description="Import an HDFC bank statement (.xls) to see your transactions and match payments to clients."
+          />
+        ) : (
+          <TransactionList transactions={transactions} />
+        )}
+      </div>
+    </PersonalFilterProvider>
   );
 }
