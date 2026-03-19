@@ -250,6 +250,56 @@ export async function togglePersonal(
   return {};
 }
 
+export async function linkClientToTransaction(
+  transactionId: number,
+  clientId: number,
+  amount: number
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase.from("client_payments").insert({
+    user_id: user.id,
+    transaction_id: transactionId,
+    client_id: clientId,
+    amount,
+  });
+
+  if (error) return { error: error.message };
+
+  await allocateSessionPayments(clientId);
+  revalidatePath("/statement");
+  return {};
+}
+
+export async function unlinkClientFromTransaction(
+  clientPaymentId: number,
+  clientId: number
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("client_payments")
+    .delete()
+    .eq("id", clientPaymentId)
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+
+  await allocateSessionPayments(clientId);
+  revalidatePath("/statement");
+  return {};
+}
+
 export async function recordCashPayment(params: {
   clientId: number;
   amount: number;

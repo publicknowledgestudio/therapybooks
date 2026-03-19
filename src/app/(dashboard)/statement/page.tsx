@@ -33,34 +33,44 @@ export default async function StatementPage() {
   } = await supabase.auth.getUser();
 
   let transactions: Transaction[] = [];
+  let clients: Array<{ id: number; name: string }> = [];
 
   if (user) {
-    const { data } = await supabase
-      .from("transactions")
-      .select(
-        `
-        id,
-        date,
-        narration,
-        amount,
-        balance,
-        reference,
-        category,
-        bank_file,
-        is_personal,
-        type,
-        created_at,
-        client_payments (
+    const [txnResult, clientResult] = await Promise.all([
+      supabase
+        .from("transactions")
+        .select(
+          `
           id,
+          date,
+          narration,
           amount,
-          client:clients ( id, name )
+          balance,
+          reference,
+          category,
+          bank_file,
+          is_personal,
+          type,
+          created_at,
+          client_payments (
+            id,
+            amount,
+            client:clients ( id, name )
+          )
+        `
         )
-      `
-      )
-      .eq("user_id", user.id)
-      .order("date", { ascending: false });
+        .eq("user_id", user.id)
+        .order("date", { ascending: false }),
+      supabase
+        .from("clients")
+        .select("id, name")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .order("name"),
+    ]);
 
-    transactions = (data as unknown as Transaction[]) ?? [];
+    transactions = (txnResult.data as unknown as Transaction[]) ?? [];
+    clients = clientResult.data ?? [];
   }
 
   return (
@@ -94,7 +104,7 @@ export default async function StatementPage() {
             description="Import an HDFC bank statement (.xls) to see your transactions and match payments to clients."
           />
         ) : (
-          <TransactionList transactions={transactions} />
+          <TransactionList transactions={transactions} allClients={clients} />
         )}
       </div>
     </PersonalFilterProvider>

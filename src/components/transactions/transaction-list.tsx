@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -13,13 +13,30 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   CaretLeft,
   CaretRight,
-  User,
   MagnifyingGlass,
+  X,
 } from "@/components/ui/icons";
 import { formatINR, formatDate } from "@/lib/format";
-import { togglePersonal } from "@/app/(dashboard)/statement/actions";
+import {
+  togglePersonal,
+  linkClientToTransaction,
+  unlinkClientFromTransaction,
+} from "@/app/(dashboard)/statement/actions";
 import { usePersonalFilter } from "./personal-toggle";
 
 interface Transaction {
@@ -41,24 +58,63 @@ interface Transaction {
   }>;
 }
 
+interface ClientOption {
+  id: number;
+  name: string;
+}
+
 interface TransactionListProps {
   transactions: Transaction[];
+  allClients?: ClientOption[];
 }
 
 const PAGE_SIZE = 50;
 
-export function TransactionList({ transactions }: TransactionListProps) {
+export function TransactionList({ transactions, allClients = [] }: TransactionListProps) {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const { showPersonal } = usePersonalFilter();
+  // Optimistic personal state: tracks IDs being animated out
+  const [animatingOut, setAnimatingOut] = useState<Set<number>>(new Set());
+  const [optimisticPersonal, setOptimisticPersonal] = useState<Set<number>>(new Set());
+
+  const markPersonalOptimistic = useCallback((txnId: number) => {
+    setOptimisticPersonal((prev) => new Set(prev).add(txnId));
+    setAnimatingOut((prev) => new Set(prev).add(txnId));
+    // Remove animation class after it completes, row stays hidden via optimisticPersonal
+    setTimeout(() => {
+      setAnimatingOut((prev) => {
+        const next = new Set(prev);
+        next.delete(txnId);
+        return next;
+      });
+    }, 500);
+  }, []);
+
+  // Clean up optimistic state once server data confirms the change
+  useMemo(() => {
+    if (optimisticPersonal.size === 0) return;
+    setOptimisticPersonal((prev) => {
+      const next = new Set(prev);
+      for (const id of prev) {
+        const txn = transactions.find((t) => t.id === id);
+        if (txn?.is_personal) next.delete(id);
+      }
+      return next.size === prev.size ? prev : next;
+    });
+  }, [transactions, optimisticPersonal.size]);
 
   // Filter transactions
   const filtered = useMemo(() => {
     let result = transactions;
 
-    // Hide personal unless toggled on
+    // Hide personal unless toggled on; keep animating rows visible briefly
     if (!showPersonal) {
-      result = result.filter((t) => !t.is_personal);
+      result = result.filter(
+        (t) =>
+          (!t.is_personal && !optimisticPersonal.has(t.id)) ||
+          animatingOut.has(t.id)
+      );
     }
 
     // Search by narration, date, or linked client name
@@ -80,7 +136,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
     }
 
     return result;
-  }, [transactions, search, showPersonal]);
+  }, [transactions, search, showPersonal, animatingOut, optimisticPersonal]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -100,6 +156,10 @@ export function TransactionList({ transactions }: TransactionListProps) {
   }
 
   async function handleTogglePersonal(txnId: number, current: boolean) {
+    // If marking as personal while personal items are hidden, animate out
+    if (!current && !showPersonal) {
+      markPersonalOptimistic(txnId);
+    }
     await togglePersonal(txnId, !current);
   }
 
@@ -153,7 +213,13 @@ export function TransactionList({ transactions }: TransactionListProps) {
             {paged.map((txn) => (
               <TableRow
                 key={txn.id}
-                className={txn.is_personal ? "opacity-50" : undefined}
+                className={
+                  animatingOut.has(txn.id)
+                    ? "animate-out fade-out slide-out-to-right duration-500 opacity-50"
+                    : txn.is_personal
+                      ? "opacity-50"
+                      : undefined
+                }
               >
                 <TableCell className="whitespace-nowrap text-xs tabular-nums">
                   {formatDate(txn.date)}
@@ -182,24 +248,10 @@ export function TransactionList({ transactions }: TransactionListProps) {
                   {txn.balance != null ? formatINR(txn.balance) : "—"}
                 </TableCell>
                 <TableCell className="text-xs">
-                  {txn.client_payments.length > 0 ? (
-                    <div className="flex flex-col gap-0.5">
-                      {txn.client_payments.map((cp) => (
-                        <Badge
-                          key={cp.id}
-                          variant="outline"
-                          className="text-[10px] bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 gap-1"
-                        >
-                          <User className="h-2.5 w-2.5" />
-                          {cp.client?.name ?? "Unknown"}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : txn.category ? (
-                    <Badge variant="outline" className="text-[10px]">
-                      {txn.category}
-                    </Badge>
-                  ) : null}
+                  <LinkedCell
+                    txn={txn}
+                    allClients={allClients}
+                  />
                 </TableCell>
                 <TableCell
                   className="text-center cursor-pointer"
@@ -249,6 +301,98 @@ export function TransactionList({ transactions }: TransactionListProps) {
             </Button>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+function LinkedCell({
+  txn,
+  allClients,
+}: {
+  txn: Transaction;
+  allClients: ClientOption[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [linking, setLinking] = useState(false);
+
+  async function handleLink(client: ClientOption) {
+    setLinking(true);
+    setOpen(false);
+    await linkClientToTransaction(txn.id, client.id, txn.amount);
+    setLinking(false);
+  }
+
+  async function handleUnlink(cpId: number, clientId: number) {
+    setLinking(true);
+    await unlinkClientFromTransaction(cpId, clientId);
+    setLinking(false);
+  }
+
+  // Already linked clients
+  const linkedIds = new Set(txn.client_payments.map((cp) => cp.client?.id).filter(Boolean));
+  const availableClients = allClients.filter((c) => !linkedIds.has(c.id));
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {txn.client_payments.map((cp) => (
+        <span key={cp.id} className="inline-flex items-center gap-1 group">
+          <a
+            href={cp.client ? `/clients/${cp.client.id}` : undefined}
+            className="text-xs text-foreground hover:underline"
+          >
+            {cp.client?.name ?? "Unknown"}
+          </a>
+          <button
+            type="button"
+            onClick={() => handleUnlink(cp.id, cp.client?.id ?? 0)}
+            disabled={linking}
+            className="hidden group-hover:inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
+            title="Remove link"
+          >
+            <X className="h-2.5 w-2.5" />
+          </button>
+        </span>
+      ))}
+
+      {txn.client_payments.length === 0 && txn.category && (
+        <Badge variant="outline" className="text-[10px]">
+          {txn.category}
+        </Badge>
+      )}
+
+      {txn.client_payments.length === 0 && availableClients.length > 0 && (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              disabled={linking}
+              className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground/40 hover:bg-muted hover:text-muted-foreground transition-colors"
+              title="Link to client"
+            >
+              <MagnifyingGlass className="h-3 w-3" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search clients..." />
+              <CommandList>
+                <CommandEmpty>No clients found.</CommandEmpty>
+                <CommandGroup>
+                  {availableClients.map((c) => (
+                    <CommandItem
+                      key={c.id}
+                      value={c.name}
+                      onSelect={() => handleLink(c)}
+                    >
+                      {c.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       )}
     </div>
   );
