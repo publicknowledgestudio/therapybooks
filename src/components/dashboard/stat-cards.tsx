@@ -34,6 +34,10 @@ const cards: {
   {
     key: "sessionsThisMonth",
     label: "Sessions This Month",
+    subtitle: () => {
+      const month = new Date().toLocaleString("en-IN", { month: "long" });
+      return `Scheduled or confirmed sessions in ${month} so far`;
+    },
     icon: CalendarBlank,
     format: (v: number) => v.toLocaleString("en-IN"),
   },

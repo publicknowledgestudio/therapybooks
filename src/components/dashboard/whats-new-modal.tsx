@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Lightning } from "@/components/ui/icons";
 import { dismissChangelog } from "@/app/(dashboard)/dashboard/actions";
 import type { ChangelogEntry } from "@/lib/changelog";
+
+const MAX_VISIBLE = 4;
 
 interface WhatsNewModalProps {
   entries: ChangelogEntry[];
@@ -33,11 +36,13 @@ export function WhatsNewModal({ entries, latestId }: WhatsNewModalProps) {
 
   function handleDismiss() {
     setOpen(false);
-    // Fire and forget — don't block the UI
     dismissChangelog(latestId);
   }
 
   if (entries.length === 0) return null;
+
+  const visible = entries.slice(0, MAX_VISIBLE);
+  const hasMore = entries.length > MAX_VISIBLE;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleDismiss()}>
@@ -50,7 +55,7 @@ export function WhatsNewModal({ entries, latestId }: WhatsNewModalProps) {
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {entries.map((entry) => (
+          {visible.map((entry) => (
             <div key={entry.id}>
               <div className="flex items-baseline gap-2">
                 <h3 className="text-sm font-medium text-foreground">
@@ -67,7 +72,16 @@ export function WhatsNewModal({ entries, latestId }: WhatsNewModalProps) {
           ))}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex items-center justify-between sm:justify-between">
+          {hasMore ? (
+            <Button variant="ghost" size="sm" asChild onClick={handleDismiss}>
+              <Link href="/changelog">
+                Show {entries.length - MAX_VISIBLE} more...
+              </Link>
+            </Button>
+          ) : (
+            <div />
+          )}
           <Button onClick={handleDismiss}>Got it</Button>
         </DialogFooter>
       </DialogContent>
