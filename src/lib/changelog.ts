@@ -14,6 +14,41 @@ export interface ChangelogEntry {
  */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: "008",
+    date: "2026-03-19",
+    title: "Calendar sync details",
+    description:
+      "After syncing your calendar, click 'See details' to view all events. Manually tag unmatched events to clients and optionally save their email for future auto-matching.",
+  },
+  {
+    id: "007",
+    date: "2026-03-19",
+    title: "Dedicated booking page",
+    description:
+      "Booking link and availability settings now live on their own page, accessible from the sidebar.",
+  },
+  {
+    id: "006",
+    date: "2026-03-19",
+    title: "Bank statement search and personal transactions",
+    description:
+      "Search transactions by narration, date, or client. Mark transactions as personal and show/hide them with one click.",
+  },
+  {
+    id: "005",
+    date: "2026-03-19",
+    title: "Calendar timezone fix",
+    description:
+      "Appointment times from Google Calendar now display correctly in IST. Sync also uses your refresh token so it works even after the session expires.",
+  },
+  {
+    id: "004",
+    date: "2026-03-19",
+    title: "Dashboard sync bar",
+    description:
+      "See when your calendar was last synced and sync again with one click, right above Today's Appointments.",
+  },
+  {
     id: "003",
     date: "2026-03-19",
     title: "Session payment tracking",
