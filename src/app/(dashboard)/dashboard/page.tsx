@@ -3,6 +3,8 @@ import { StatCards } from "@/components/dashboard/stat-cards";
 import { AppointmentsToday } from "@/components/dashboard/appointments-today";
 import { OnboardingPrompt } from "@/components/dashboard/onboarding-prompt";
 import { BookingLinkTile } from "@/components/dashboard/booking-link-tile";
+import { WhatsNewModal } from "@/components/dashboard/whats-new-modal";
+import { getUnseenEntries, LATEST_CHANGELOG_ID } from "@/lib/changelog";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -29,7 +31,7 @@ export default async function DashboardPage() {
     await Promise.all([
       supabase
         .from("therapist_settings")
-        .select("onboarding_completed, booking_slug")
+        .select("onboarding_completed, booking_slug, last_seen_changelog")
         .eq("user_id", user.id)
         .single(),
 
@@ -60,6 +62,8 @@ export default async function DashboardPage() {
 
   const onboardingCompleted = settingsResult.data?.onboarding_completed ?? false;
   const bookingSlug = settingsResult.data?.booking_slug ?? null;
+  const lastSeenChangelog = settingsResult.data?.last_seen_changelog ?? null;
+  const unseenChangelog = getUnseenEntries(lastSeenChangelog);
 
   const userName =
     user.user_metadata?.full_name ?? user.user_metadata?.name ?? null;
@@ -106,6 +110,13 @@ export default async function DashboardPage() {
       </div>
 
       <AppointmentsToday sessions={todaySessions} />
+
+      {unseenChangelog.length > 0 && (
+        <WhatsNewModal
+          entries={unseenChangelog}
+          latestId={LATEST_CHANGELOG_ID}
+        />
+      )}
     </div>
   );
 }
