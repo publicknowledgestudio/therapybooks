@@ -3,10 +3,20 @@ import { getRecentEvents } from "./google-calendar";
 import { createGoogleClient } from "./google";
 import type { Database } from "./database.types";
 
+export interface SyncEventDetail {
+  eventId: string;
+  title: string;
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+  attendeeEmail: string | null;
+  clientName: string | null;
+}
+
 export interface SyncResult {
-  created: number;
-  skipped: number;
-  unmatched: number;
+  created: SyncEventDetail[];
+  skipped: SyncEventDetail[];
+  unmatched: SyncEventDetail[];
 }
 
 export async function syncCalendarEvents(
@@ -15,7 +25,7 @@ export async function syncCalendarEvents(
   accessToken: string,
   calendarId: string,
 ): Promise<SyncResult> {
-  const result: SyncResult = { created: 0, skipped: 0, unmatched: 0 };
+  const result: SyncResult = { created: [], skipped: [], unmatched: [] };
 
   // Fetch past events from Google Calendar (last 30 days)
   const pastEvents = await getRecentEvents(accessToken, calendarId, 30);
@@ -73,22 +83,42 @@ export async function syncCalendarEvents(
     clientRates.set(client.id, client.current_rate);
   }
 
+  function eventDetail(
+    evtId: string,
+    evt: (typeof allEvents)[0],
+    clientName?: string | null,
+  ): SyncEventDetail {
+    const sDt = evt.start?.dateTime ? new Date(evt.start.dateTime) : null;
+    const eDt = evt.end?.dateTime ? new Date(evt.end.dateTime) : null;
+    const istTime: Intl.DateTimeFormatOptions = { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false };
+    const istDate: Intl.DateTimeFormatOptions = { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" };
+    return {
+      eventId: evtId,
+      title: evt.summary ?? "Untitled",
+      date: sDt ? sDt.toLocaleDateString("en-CA", istDate) : "",
+      startTime: sDt ? sDt.toLocaleTimeString("en-GB", istTime) : null,
+      endTime: eDt ? eDt.toLocaleTimeString("en-GB", istTime) : null,
+      attendeeEmail: (evt.attendees ?? []).find(a => a.email && !a.self)?.email ?? null,
+      clientName: clientName ?? null,
+    };
+  }
+
   for (const [eventId, event] of uniqueEvents) {
     // Skip already imported
     if (importedEventIds.has(eventId)) {
-      result.skipped++;
+      result.skipped.push(eventDetail(eventId, event));
       continue;
     }
 
     // Skip all-day events (not therapy sessions)
     if (event.start?.date && !event.start?.dateTime) {
-      result.skipped++;
+      result.skipped.push(eventDetail(eventId, event));
       continue;
     }
 
     // Skip cancelled events
     if (event.status === "cancelled") {
-      result.skipped++;
+      result.skipped.push(eventDetail(eventId, event));
       continue;
     }
 
@@ -99,7 +129,7 @@ export async function syncCalendarEvents(
     const endDt = event.end?.dateTime ? new Date(event.end.dateTime) : null;
 
     if (!startDt) {
-      result.skipped++;
+      result.skipped.push(eventDetail(eventId, event));
       continue;
     }
 
@@ -129,7 +159,7 @@ export async function syncCalendarEvents(
     }
 
     if (!clientId) {
-      result.unmatched++;
+      result.unmatched.push(eventDetail(eventId, event));
       continue; // Skip events we can't match to a client
     }
 
@@ -183,11 +213,12 @@ export async function syncCalendarEvents(
       notes: event.description ?? null,
     });
 
+    const matchedClientName = (clients ?? []).find(c => c.id === clientId)?.name ?? null;
     if (!error) {
-      result.created++;
+      result.created.push(eventDetail(eventId, event, matchedClientName));
     } else {
       console.error("Failed to insert session:", error);
-      result.skipped++;
+      result.skipped.push(eventDetail(eventId, event, matchedClientName));
     }
   }
 
