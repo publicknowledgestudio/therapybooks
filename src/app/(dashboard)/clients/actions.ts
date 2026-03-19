@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { allocateSessionPayments } from "@/app/(dashboard)/clients/allocate-payments";
 
 export async function createClientAction(formData: {
   name: string;
@@ -136,6 +137,11 @@ export async function updateClientAction(
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Re-allocate session payments when opening balance changes
+  if (field === "opening_balance") {
+    await allocateSessionPayments(clientId);
   }
 
   revalidatePath("/clients");

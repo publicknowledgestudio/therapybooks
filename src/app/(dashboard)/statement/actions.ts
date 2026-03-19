@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { allocateSessionPayments } from "@/app/(dashboard)/clients/allocate-payments";
 
 export type TagSuggestion = {
   type: "category" | "invoice" | "contractor";
@@ -89,6 +90,14 @@ export async function importTransactions(
       // Non-fatal — transactions were already imported
     }
   }
+
+  // Re-allocate session payments for each affected client
+  const affectedClientIds = [
+    ...new Set(clientPayments.map((cp) => cp.client_id)),
+  ];
+  await Promise.all(
+    affectedClientIds.map((cid) => allocateSessionPayments(cid))
+  );
 
   revalidatePath("/statement");
 
