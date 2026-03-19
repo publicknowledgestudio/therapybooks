@@ -206,3 +206,23 @@ export async function suggestTags(
 
   return { suggestions };
 }
+
+export async function fetchClients(): Promise<
+  Array<{ id: number; name: string }>
+> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data } = await supabase
+    .from("clients")
+    .select("id, name")
+    .eq("user_id", user.id)
+    .eq("is_active", true)
+    .order("name");
+
+  return data ?? [];
+}
