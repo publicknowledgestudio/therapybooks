@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { CircleNotch, Clock } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import type { SyncResult } from "@/lib/calendar-sync";
+import { fetchClients } from "@/app/(dashboard)/statement/actions";
+import { SyncResultsDialog } from "./sync-results-dialog";
 
 interface CalendarSyncBarProps {
   lastSyncedAt: string | null;
@@ -28,6 +31,9 @@ function formatRelativeTime(dateStr: string): string {
 export function CalendarSyncBar({ lastSyncedAt }: CalendarSyncBarProps) {
   const router = useRouter();
   const [isSyncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  const [allClients, setAllClients] = useState<Array<{ id: number; name: string }>>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   async function handleSync() {
     setSyncing(true);
@@ -38,9 +44,12 @@ export function CalendarSyncBar({ lastSyncedAt }: CalendarSyncBarProps) {
         throw new Error(data.error ?? "Sync failed");
       }
       const data = await res.json();
-      const created = data.created ?? 0;
-      const skipped = data.skipped ?? 0;
-      const unmatched = data.unmatched ?? 0;
+      setSyncResult(data);
+      const clients = await fetchClients();
+      setAllClients(clients);
+      const created = data.created?.length ?? 0;
+      const skipped = data.skipped?.length ?? 0;
+      const unmatched = data.unmatched?.length ?? 0;
       const parts = [`${created} new`];
       if (skipped > 0) parts.push(`${skipped} skipped`);
       if (unmatched > 0) parts.push(`${unmatched} unmatched`);
@@ -75,6 +84,20 @@ export function CalendarSyncBar({ lastSyncedAt }: CalendarSyncBarProps) {
         )}
         {isSyncing ? "Syncing..." : "Sync Now"}
       </Button>
+      {syncResult && (
+        <Button variant="ghost" size="sm" onClick={() => setDialogOpen(true)} className="h-7 text-xs">
+          See details
+        </Button>
+      )}
+      {syncResult && (
+        <SyncResultsDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          result={syncResult}
+          allClients={allClients}
+          onTagged={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }
