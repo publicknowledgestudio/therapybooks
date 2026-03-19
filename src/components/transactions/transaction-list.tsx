@@ -32,6 +32,7 @@ interface Transaction {
   category: string | null;
   bank_file: string | null;
   is_personal: boolean | null;
+  type: string | null;
   created_at: string;
   client_payments: Array<{
     id: number;
@@ -179,9 +180,16 @@ export function TransactionList({ transactions }: TransactionListProps) {
                   {formatDate(txn.date)}
                 </TableCell>
                 <TableCell className="max-w-[400px] text-xs">
-                  <span className="line-clamp-1" title={txn.narration ?? ""}>
-                    {txn.narration}
-                  </span>
+                  <div className="flex items-center">
+                    <span className="line-clamp-1" title={txn.narration ?? ""}>
+                      {txn.narration}
+                    </span>
+                    {txn.type === "cash" && (
+                      <Badge variant="outline" className="ml-2 text-[10px] shrink-0">
+                        Cash
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell
                   className={`text-right text-xs tabular-nums font-medium ${

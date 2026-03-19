@@ -249,3 +249,54 @@ export async function togglePersonal(
   revalidatePath("/statement");
   return {};
 }
+
+export async function recordCashPayment(params: {
+  clientId: number;
+  amount: number;
+  date: string;
+  notes: string;
+}): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+  if (params.amount <= 0) return { error: "Amount must be positive" };
+
+  // Create transaction
+  const narration = params.notes.trim() || "Cash payment";
+  const { data: txn, error: txnError } = await supabase
+    .from("transactions")
+    .insert({
+      user_id: user.id,
+      date: params.date,
+      narration,
+      amount: params.amount,
+      source: "manual",
+      type: "cash",
+      category: "Client Payment",
+    })
+    .select("id")
+    .single();
+
+  if (txnError || !txn)
+    return { error: txnError?.message ?? "Failed to create transaction" };
+
+  // Link to client
+  const { error: cpError } = await supabase.from("client_payments").insert({
+    user_id: user.id,
+    transaction_id: txn.id,
+    client_id: params.clientId,
+    amount: params.amount,
+  });
+
+  if (cpError) return { error: cpError.message };
+
+  // Re-allocate session payments
+  await allocateSessionPayments(params.clientId);
+
+  revalidatePath("/statement");
+  revalidatePath(`/clients/${params.clientId}`);
+  return {};
+}

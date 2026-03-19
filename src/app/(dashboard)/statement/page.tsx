@@ -4,6 +4,7 @@ import { ArrowsLeftRight, UploadSimple } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { TransactionList } from "@/components/transactions/transaction-list";
+import { RecordCashPaymentDialog } from "@/components/transactions/record-cash-payment-dialog";
 
 interface Transaction {
   id: number;
@@ -15,6 +16,7 @@ interface Transaction {
   category: string | null;
   bank_file: string | null;
   is_personal: boolean | null;
+  type: string;
   created_at: string;
   client_payments: Array<{
     id: number;
@@ -45,6 +47,7 @@ export default async function StatementPage() {
         category,
         bank_file,
         is_personal,
+        type,
         created_at,
         client_payments (
           id,
@@ -70,12 +73,15 @@ export default async function StatementPage() {
             Imported bank transactions and payment allocations
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/statement/import">
-            <UploadSimple className="mr-2 h-4 w-4" />
-            Import Statement
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <RecordCashPaymentDialog />
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/statement/import">
+              <UploadSimple className="mr-2 h-4 w-4" />
+              Import Statement
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {transactions.length === 0 ? (
