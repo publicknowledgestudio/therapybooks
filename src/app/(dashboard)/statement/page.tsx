@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { ArrowsLeftRight } from "@/components/ui/icons";
+import Link from "next/link";
+import { ArrowsLeftRight, UploadSimple } from "@/components/ui/icons";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
-import { ImportStatementDialog } from "@/components/transactions/import-statement-dialog";
 import { TransactionList } from "@/components/transactions/transaction-list";
 
 interface Transaction {
@@ -69,7 +70,12 @@ export default async function StatementPage() {
             Imported bank transactions and payment allocations
           </p>
         </div>
-        <ImportStatementDialog />
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/statement/import">
+            <UploadSimple className="mr-2 h-4 w-4" />
+            Import Statement
+          </Link>
+        </Button>
       </div>
 
       {transactions.length === 0 ? (
