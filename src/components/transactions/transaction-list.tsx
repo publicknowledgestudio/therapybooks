@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -11,8 +11,16 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CaretLeft, CaretRight, User } from "@/components/ui/icons";
+import {
+  CaretLeft,
+  CaretRight,
+  User,
+  MagnifyingGlass,
+  Eye,
+  EyeSlash,
+} from "@/components/ui/icons";
 import { formatINR, formatDate } from "@/lib/format";
+import { togglePersonal } from "@/app/(dashboard)/statement/actions";
 
 interface Transaction {
   id: number;
@@ -40,25 +48,100 @@ const PAGE_SIZE = 50;
 
 export function TransactionList({ transactions }: TransactionListProps) {
   const [page, setPage] = useState(0);
-  const totalPages = Math.ceil(transactions.length / PAGE_SIZE);
-  const paged = transactions.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const [search, setSearch] = useState("");
+  const [showPersonal, setShowPersonal] = useState(false);
 
-  // Summary stats
-  const deposits = transactions.filter((t) => t.amount > 0);
-  const withdrawals = transactions.filter((t) => t.amount < 0);
+  // Filter transactions
+  const filtered = useMemo(() => {
+    let result = transactions;
+
+    // Hide personal unless toggled on
+    if (!showPersonal) {
+      result = result.filter((t) => !t.is_personal);
+    }
+
+    // Search by narration, date, or linked client name
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((t) => {
+        const narration = (t.narration ?? "").toLowerCase();
+        const date = t.date;
+        const clientNames = t.client_payments
+          .map((cp) => cp.client?.name ?? "")
+          .join(" ")
+          .toLowerCase();
+        return (
+          narration.includes(q) ||
+          date.includes(q) ||
+          clientNames.includes(q)
+        );
+      });
+    }
+
+    return result;
+  }, [transactions, search, showPersonal]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  // Summary stats (from filtered view)
+  const deposits = filtered.filter((t) => t.amount > 0);
+  const withdrawals = filtered.filter((t) => t.amount < 0);
   const totalDeposits = deposits.reduce((s, t) => s + t.amount, 0);
   const totalWithdrawals = withdrawals.reduce((s, t) => s + t.amount, 0);
-  const linkedCount = transactions.filter(
+  const linkedCount = filtered.filter(
     (t) => t.client_payments.length > 0
   ).length;
+  const personalCount = transactions.filter((t) => t.is_personal).length;
+
+  // Reset page when search changes
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setPage(0);
+  }
+
+  async function handleTogglePersonal(txnId: number, current: boolean) {
+    await togglePersonal(txnId, !current);
+  }
 
   return (
     <div className="mt-6 space-y-4">
+      {/* Search + filters bar */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <MagnifyingGlass className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search transactions..."
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="h-9 w-full rounded-md border bg-transparent pl-8 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+
+        <Button
+          variant={showPersonal ? "default" : "outline"}
+          size="sm"
+          onClick={() => {
+            setShowPersonal(!showPersonal);
+            setPage(0);
+          }}
+          className="h-9 text-xs gap-1.5"
+        >
+          {showPersonal ? (
+            <Eye className="h-3.5 w-3.5" />
+          ) : (
+            <EyeSlash className="h-3.5 w-3.5" />
+          )}
+          Personal ({personalCount})
+        </Button>
+      </div>
+
       {/* Summary bar */}
       <div className="flex flex-wrap items-center gap-4 text-sm">
         <span className="text-muted-foreground">
-          {transactions.length} transaction
-          {transactions.length !== 1 ? "s" : ""}
+          {filtered.length} transaction
+          {filtered.length !== 1 ? "s" : ""}
         </span>
         <span className="text-green-600">
           {formatINR(totalDeposits)} in
@@ -83,11 +166,15 @@ export function TransactionList({ transactions }: TransactionListProps) {
               <TableHead className="text-right w-[120px]">Amount</TableHead>
               <TableHead className="text-right w-[120px]">Balance</TableHead>
               <TableHead className="w-[160px]">Linked</TableHead>
+              <TableHead className="w-[80px] text-center">Personal</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paged.map((txn) => (
-              <TableRow key={txn.id}>
+              <TableRow
+                key={txn.id}
+                className={txn.is_personal ? "opacity-50" : undefined}
+              >
                 <TableCell className="whitespace-nowrap text-xs tabular-nums">
                   {formatDate(txn.date)}
                 </TableCell>
@@ -122,13 +209,30 @@ export function TransactionList({ transactions }: TransactionListProps) {
                       ))}
                     </div>
                   ) : txn.category ? (
-                    <Badge
-                      variant="outline"
-                      className="text-[10px]"
-                    >
+                    <Badge variant="outline" className="text-[10px]">
                       {txn.category}
                     </Badge>
                   ) : null}
+                </TableCell>
+                <TableCell className="text-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleTogglePersonal(txn.id, !!txn.is_personal)
+                    }
+                    className={`inline-flex h-5 w-5 items-center justify-center rounded text-xs transition-colors ${
+                      txn.is_personal
+                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                        : "text-muted-foreground/40 hover:bg-muted hover:text-muted-foreground"
+                    }`}
+                    title={
+                      txn.is_personal
+                        ? "Marked as personal — click to unmark"
+                        : "Mark as personal"
+                    }
+                  >
+                    P
+                  </button>
                 </TableCell>
               </TableRow>
             ))}

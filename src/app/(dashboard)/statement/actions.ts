@@ -226,3 +226,26 @@ export async function fetchClients(): Promise<
 
   return data ?? [];
 }
+
+export async function togglePersonal(
+  transactionId: number,
+  isPersonal: boolean
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("transactions")
+    .update({ is_personal: isPersonal })
+    .eq("id", transactionId)
+    .eq("user_id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/statement");
+  return {};
+}

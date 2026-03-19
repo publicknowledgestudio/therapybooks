@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,15 +18,23 @@ interface WhatsNewModalProps {
   latestId: string;
 }
 
+function formatEntryDate(dateStr: string): string {
+  const [year, month, day] = dateStr.split("-");
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function WhatsNewModal({ entries, latestId }: WhatsNewModalProps) {
   const [open, setOpen] = useState(true);
-  const [isPending, startTransition] = useTransition();
 
   function handleDismiss() {
-    startTransition(async () => {
-      await dismissChangelog(latestId);
-      setOpen(false);
-    });
+    setOpen(false);
+    // Fire and forget — don't block the UI
+    dismissChangelog(latestId);
   }
 
   if (entries.length === 0) return null;
@@ -48,8 +56,8 @@ export function WhatsNewModal({ entries, latestId }: WhatsNewModalProps) {
                 <h3 className="text-sm font-medium text-foreground">
                   {entry.title}
                 </h3>
-                <span className="text-[10px] text-muted-foreground tabular-nums">
-                  {entry.date}
+                <span className="text-[10px] text-muted-foreground">
+                  {formatEntryDate(entry.date)}
                 </span>
               </div>
               <p className="mt-0.5 text-sm text-muted-foreground">
@@ -60,9 +68,7 @@ export function WhatsNewModal({ entries, latestId }: WhatsNewModalProps) {
         </div>
 
         <DialogFooter>
-          <Button onClick={handleDismiss} disabled={isPending}>
-            {isPending ? "Saving..." : "Got it"}
-          </Button>
+          <Button onClick={handleDismiss}>Got it</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
