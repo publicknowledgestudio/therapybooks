@@ -27,22 +27,30 @@ export function GoogleConnection({
   const isConnected = !!calendarId;
 
   async function handleConnect() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/settings`,
-        scopes:
-          "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/contacts.readonly",
-        queryParams: {
-          access_type: "offline",
-          prompt: "consent",
-        },
-      },
+    // The user is already authenticated via Google OAuth — just set the
+    // calendar ID to their primary calendar (email) via the settings API.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user?.email) {
+      toast.error("Could not determine your Google account email");
+      return;
+    }
+
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ google_calendar_id: user.email }),
     });
 
-    if (error) {
-      toast.error("Failed to connect Google account");
+    if (!res.ok) {
+      toast.error("Failed to connect Google Calendar");
+      return;
     }
+
+    setCalendarId(user.email);
+    toast.success("Google Calendar connected");
   }
 
   async function handleSync() {
