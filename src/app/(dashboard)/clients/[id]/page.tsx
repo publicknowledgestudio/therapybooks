@@ -51,7 +51,7 @@ export default async function ClientDetailPage({
   const [sessionsResult, paymentsResult] = await Promise.all([
     supabase
       .from("sessions")
-      .select("id, date, start_time, end_time, duration_minutes, rate, status")
+      .select("id, date, start_time, end_time, duration_minutes, rate, status, session_payments(id)")
       .eq("client_id", clientId)
       .eq("user_id", user.id)
       .order("date", { ascending: false }),
@@ -181,6 +181,7 @@ export default async function ClientDetailPage({
                   <TableHead>Duration</TableHead>
                   <TableHead className="text-right">Rate</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Payment</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -203,6 +204,26 @@ export default async function ClientDetailPage({
                       >
                         {session.status.replace("_", " ")}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {session.status === "cancelled" ? null : (
+                        <Badge
+                          variant={
+                            (session.session_payments as { id: number }[])?.length > 0
+                              ? "default"
+                              : "outline"
+                          }
+                          className={
+                            (session.session_payments as { id: number }[])?.length > 0
+                              ? "bg-green-100 text-green-800 hover:bg-green-100"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {(session.session_payments as { id: number }[])?.length > 0
+                            ? "Paid"
+                            : "Unpaid"}
+                        </Badge>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
