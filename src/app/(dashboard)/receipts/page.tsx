@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ReceiptActions } from "./receipt-actions";
+import { BackfillButton } from "./backfill-button";
 
 interface ReceiptRow {
   id: number;
@@ -41,6 +42,15 @@ export default async function ReceiptsPage() {
 
   const receipts = (data as unknown as ReceiptRow[]) ?? [];
 
+  // Check if there are payments without receipts
+  const { count: paymentCount } = await supabase
+    .from("client_payments")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  const hasUnreceiptedPayments =
+    (paymentCount ?? 0) > receipts.filter((r) => r.status !== "void").length;
+
   return (
     <div>
       <div>
@@ -52,13 +62,22 @@ export default async function ReceiptsPage() {
         </p>
       </div>
 
-      {receipts.length === 0 ? (
+      {hasUnreceiptedPayments && (
+        <div className="mt-6 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm text-amber-800">
+            Some past payments don&apos;t have receipts yet.
+          </p>
+          <BackfillButton />
+        </div>
+      )}
+
+      {receipts.length === 0 && !hasUnreceiptedPayments ? (
         <EmptyState
           icon={Receipt}
           title="No receipts yet"
           description="Receipts are auto-generated when you record client payments."
         />
-      ) : (
+      ) : receipts.length === 0 ? null : (
         <div className="mt-6 rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
