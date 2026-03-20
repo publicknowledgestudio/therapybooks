@@ -16,6 +16,7 @@ interface EmptyStateProps {
   description: string;
   action?: EmptyStateAction;
   secondaryAction?: EmptyStateAction;
+  children?: React.ReactNode;
 }
 
 export function EmptyState({
@@ -24,6 +25,7 @@ export function EmptyState({
   description,
   action,
   secondaryAction,
+  children,
 }: EmptyStateProps) {
   return (
     <div className="mt-16 flex flex-col items-center text-center">
@@ -72,6 +74,7 @@ export function EmptyState({
             ))}
         </div>
       )}
+      {children && <div className="mt-4">{children}</div>}
     </div>
   );
 }

@@ -62,22 +62,19 @@ export default async function ReceiptsPage() {
         </p>
       </div>
 
-      {hasUnreceiptedPayments && (
-        <div className="mt-6 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm text-amber-800">
-            Some past payments don&apos;t have receipts yet.
-          </p>
-          <BackfillButton />
-        </div>
-      )}
-
-      {receipts.length === 0 && !hasUnreceiptedPayments ? (
+      {receipts.length === 0 ? (
         <EmptyState
           icon={Receipt}
           title="No receipts yet"
-          description="Receipts are auto-generated when you record client payments."
-        />
-      ) : receipts.length === 0 ? null : (
+          description={
+            hasUnreceiptedPayments
+              ? "You have past payments without receipts. Generate them now, and future payments will create receipts automatically."
+              : "Receipts are auto-generated when you record client payments."
+          }
+        >
+          {hasUnreceiptedPayments && <BackfillButton />}
+        </EmptyState>
+      ) : (
         <div className="mt-6 rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>

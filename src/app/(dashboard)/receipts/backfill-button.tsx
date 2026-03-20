@@ -40,7 +40,7 @@ export function BackfillButton() {
       disabled={loading}
     >
       {loading && <CircleNotch className="size-4 animate-spin" />}
-      Generate Receipts
+      Generate Receipts for Previous Payments
     </Button>
   );
 }
