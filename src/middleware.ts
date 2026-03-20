@@ -45,6 +45,7 @@ export async function middleware(request: NextRequest) {
     "/api/client-portal",
     "/privacy",
     "/terms",
+    "/receipt",
   ];
   const isPublicPath =
     pathname === "/" ||

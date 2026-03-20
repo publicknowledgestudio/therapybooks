@@ -15,6 +15,7 @@ import {
   ArrowsLeftRight,
   FileText,
   LinkSimple,
+  Receipt,
   UserCheck,
   GearSix,
   SignOut,
@@ -29,11 +30,11 @@ const NAV_ITEMS = [
   { label: "Clients", href: "/clients", icon: Users },
   { label: "Appointments", href: "/sessions", icon: CalendarBlank },
   { label: "Bank Statement", href: "/statement", icon: ArrowsLeftRight },
+  { label: "Payment Receipts", href: "/receipts", icon: Receipt },
   { label: "Booking Link", href: "/booking-link", icon: LinkSimple },
 ];
 
 const COMING_SOON_ITEMS = [
-  { label: "Invoices", href: "/invoices", icon: FileText },
   { label: "Therapists", href: "/therapists", icon: UserCheck },
 ];
 

@@ -17,3 +17,5 @@ out/
 .DS_Store
 *.pem
 .xhawk/
+supabase/.temp/
+todo.md

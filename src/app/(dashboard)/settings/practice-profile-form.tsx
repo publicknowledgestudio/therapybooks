@@ -14,6 +14,9 @@ const practiceProfileSchema = z.object({
   practice_address: z.string().optional(),
   practice_phone: z.string().optional(),
   default_session_rate: z.union([z.number(), z.nan()]).optional(),
+  pan_number: z.string().optional(),
+  registration_number: z.string().optional(),
+  clinic_address: z.string().optional(),
 });
 
 type PracticeProfileValues = z.infer<typeof practiceProfileSchema>;
@@ -23,6 +26,9 @@ type PracticeProfileFormProps = {
   practiceAddress: string | null;
   practicePhone: string | null;
   defaultSessionRate: number | null;
+  panNumber: string | null;
+  registrationNumber: string | null;
+  clinicAddress: string | null;
 };
 
 export function PracticeProfileForm({
@@ -30,6 +36,9 @@ export function PracticeProfileForm({
   practiceAddress,
   practicePhone,
   defaultSessionRate,
+  panNumber,
+  registrationNumber,
+  clinicAddress,
 }: PracticeProfileFormProps) {
   const {
     register,
@@ -42,6 +51,9 @@ export function PracticeProfileForm({
       practice_address: practiceAddress ?? "",
       practice_phone: practicePhone ?? "",
       default_session_rate: defaultSessionRate ?? undefined,
+      pan_number: panNumber ?? "",
+      registration_number: registrationNumber ?? "",
+      clinic_address: clinicAddress ?? "",
     },
   });
 
@@ -108,6 +120,39 @@ export function PracticeProfileForm({
           <p className="text-xs text-muted-foreground">
             Default rate for new clients. Can be adjusted on each client&apos;s profile.
           </p>
+        </div>
+      </div>
+
+      {/* Professional Details */}
+      <div className="pt-4">
+        <p className="text-xs text-muted-foreground mb-4">
+          Professional Details (shown on receipts)
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="pan_number">PAN Number</Label>
+            <Input
+              id="pan_number"
+              placeholder="e.g. ABCDE1234F"
+              {...register("pan_number")}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="registration_number">Registration Number</Label>
+            <Input
+              id="registration_number"
+              placeholder="e.g. RCI/2024/12345"
+              {...register("registration_number")}
+            />
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="clinic_address">Clinic Address</Label>
+            <Input
+              id="clinic_address"
+              placeholder="e.g. 204 Wellness Centre, Bandra West, Mumbai"
+              {...register("clinic_address")}
+            />
+          </div>
         </div>
       </div>
 

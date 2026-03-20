@@ -54,6 +54,9 @@ export default async function SettingsPage() {
             practiceAddress={settings?.practice_address ?? null}
             practicePhone={settings?.practice_phone ?? null}
             defaultSessionRate={settings?.default_session_rate ?? null}
+            panNumber={(settings as Record<string, unknown>)?.pan_number as string ?? null}
+            registrationNumber={(settings as Record<string, unknown>)?.registration_number as string ?? null}
+            clinicAddress={(settings as Record<string, unknown>)?.clinic_address as string ?? null}
           />
         </section>
 

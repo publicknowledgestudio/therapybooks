@@ -30,6 +30,7 @@ import {
   CaretRight,
   MagnifyingGlass,
   X,
+  Eye,
 } from "@/components/ui/icons";
 import { formatINR, formatDate } from "@/lib/format";
 import {
@@ -38,6 +39,7 @@ import {
   unlinkClientFromTransaction,
 } from "@/app/(dashboard)/statement/actions";
 import { usePersonalFilter } from "./personal-toggle";
+import { toast } from "sonner";
 
 interface Transaction {
   id: number;
@@ -156,11 +158,55 @@ export function TransactionList({ transactions, allClients = [] }: TransactionLi
   }
 
   async function handleTogglePersonal(txnId: number, current: boolean) {
-    // If marking as personal while personal items are hidden, animate out
-    if (!current && !showPersonal) {
-      markPersonalOptimistic(txnId);
+    const txn = transactions.find((t) => t.id === txnId);
+    const narration = txn?.narration ?? "Transaction";
+
+    if (!current) {
+      // Marking as personal
+      if (!showPersonal) {
+        markPersonalOptimistic(txnId);
+      }
+      await togglePersonal(txnId, true);
+
+      toast.custom(
+        (toastId) => (
+          <div className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3 shadow-lg">
+            <Eye className="h-5 w-5 text-amber-600 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground line-clamp-1">
+                {narration}
+              </p>
+              <p className="text-sm font-medium">Marked as Personal</p>
+            </div>
+            <button
+              type="button"
+              className="text-sm font-medium text-primary hover:underline shrink-0 cursor-pointer"
+              onClick={async () => {
+                toast.dismiss(toastId);
+                // Undo: remove from optimistic sets and revert
+                setOptimisticPersonal((prev) => {
+                  const next = new Set(prev);
+                  next.delete(txnId);
+                  return next;
+                });
+                setAnimatingOut((prev) => {
+                  const next = new Set(prev);
+                  next.delete(txnId);
+                  return next;
+                });
+                await togglePersonal(txnId, false);
+              }}
+            >
+              Undo
+            </button>
+          </div>
+        ),
+        { duration: 5000 }
+      );
+    } else {
+      // Unmarking as personal
+      await togglePersonal(txnId, false);
     }
-    await togglePersonal(txnId, !current);
   }
 
   return (
@@ -259,6 +305,7 @@ export function TransactionList({ transactions, allClients = [] }: TransactionLi
                 >
                   <Checkbox
                     checked={!!txn.is_personal}
+                    onClick={(e) => e.stopPropagation()}
                     onCheckedChange={() =>
                       handleTogglePersonal(txn.id, !!txn.is_personal)
                     }
