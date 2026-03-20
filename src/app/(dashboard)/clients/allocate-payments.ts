@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { generateReceipts } from "./generate-receipt";
 
 /**
  * Idempotent FIFO allocator: deletes all session_payments for a client,
@@ -141,10 +140,6 @@ export async function allocateSessionPayments(
     }
   }
 
-  // Auto-generate receipts for newly allocated sessions
-  await generateReceipts(clientId, user.id);
-
   revalidatePath(`/clients/${clientId}`);
-  revalidatePath("/receipts");
   return { allocated: toInsert.length };
 }

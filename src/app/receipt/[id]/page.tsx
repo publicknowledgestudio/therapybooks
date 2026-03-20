@@ -19,7 +19,7 @@ interface ReceiptData {
   id: number;
   receipt_number: number;
   date: string;
-  total_amount: number;
+  amount: number;
   status: string;
   payment_method: string | null;
   transaction_id: string | null;
@@ -53,7 +53,7 @@ export default async function PublicReceiptPage({
       id,
       receipt_number,
       date,
-      total_amount,
+      amount,
       status,
       payment_method,
       transaction_id,
@@ -215,7 +215,7 @@ export default async function PublicReceiptPage({
                       Total
                     </td>
                     <td className="px-4 py-2.5 text-right">
-                      {formatINR(receiptData.total_amount)}
+                      {formatINR(receiptData.amount)}
                     </td>
                   </tr>
                 </tbody>
@@ -226,7 +226,7 @@ export default async function PublicReceiptPage({
           {receiptData.receipt_sessions.length === 0 && (
             <div className="mt-6">
               <p className="text-sm font-semibold">
-                Total: {formatINR(receiptData.total_amount)}
+                Total: {formatINR(receiptData.amount)}
               </p>
             </div>
           )}

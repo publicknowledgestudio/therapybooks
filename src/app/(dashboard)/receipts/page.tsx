@@ -18,7 +18,7 @@ interface ReceiptRow {
   id: number;
   receipt_number: number;
   date: string;
-  total_amount: number;
+  amount: number;
   status: string;
   client_id: number;
   clients: { name: string; phone: string | null } | null;
@@ -35,7 +35,7 @@ export default async function ReceiptsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabase as any)
     .from("receipts")
-    .select("id, receipt_number, date, total_amount, status, client_id, clients(name, phone)")
+    .select("id, receipt_number, date, amount, status, client_id, clients(name, phone)")
     .eq("user_id", user.id)
     .order("receipt_number", { ascending: false });
 
@@ -90,7 +90,7 @@ export default async function ReceiptsPage() {
                         year: "numeric",
                       })}
                     </TableCell>
-                    <TableCell>{formatINR(receipt.total_amount)}</TableCell>
+                    <TableCell>{formatINR(receipt.amount)}</TableCell>
                     <TableCell>
                       {isVoid ? (
                         <Badge variant="destructive">VOID</Badge>

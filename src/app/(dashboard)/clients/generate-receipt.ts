@@ -3,68 +3,33 @@
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * After FIFO allocation, generate receipts for any newly-paid sessions
- * that don't already have a receipt. Groups session_payments by
- * transaction_id into one receipt per payment source.
+ * Generate a receipt for a client payment. Called after a payment is linked
+ * to a client (bank statement match or cash recording). Creates one receipt
+ * per client_payment, with allocated sessions attached if they exist.
+ *
+ * If a receipt already exists for this transaction+client combo, skips it.
  */
-export async function generateReceipts(
+export async function generateReceiptForPayment(
   clientId: number,
+  transactionId: number,
+  amount: number,
   userId: string
-): Promise<{ created: number; error?: string }> {
+): Promise<{ created: boolean; error?: string }> {
   const supabase = await createClient();
 
-  // Get all session_payments for this client's sessions
-  const { data: sessionPayments } = await (supabase as any)
-    .from("session_payments")
-    .select("id, session_id, transaction_id, amount")
+  // Check if a receipt already exists for this transaction+client
+  const { data: existing } = await (supabase as any)
+    .from("receipts")
+    .select("id")
+    .eq("client_id", clientId)
+    .eq("transaction_id", transactionId)
     .eq("user_id", userId)
-    .in(
-      "session_id",
-      (
-        await supabase
-          .from("sessions")
-          .select("id")
-          .eq("client_id", clientId)
-          .eq("user_id", userId)
-      ).data?.map((s: { id: number }) => s.id) ?? []
-    );
+    .limit(1)
+    .single();
 
-  if (!sessionPayments || sessionPayments.length === 0) {
-    return { created: 0 };
-  }
+  if (existing) return { created: false };
 
-  // Get existing receipt_sessions to avoid duplicates
-  const { data: existingReceiptSessions } = await (supabase as any)
-    .from("receipt_sessions")
-    .select("session_id");
-
-  // Filter to sessions already on a receipt for this client
-  const existingSessionIds = new Set<number>();
-  if (existingReceiptSessions) {
-    for (const rs of existingReceiptSessions) {
-      existingSessionIds.add(rs.session_id);
-    }
-  }
-
-  // Filter to only new session_payments not already on a receipt
-  const newPayments = sessionPayments.filter(
-    (sp: { session_id: number }) => !existingSessionIds.has(sp.session_id)
-  );
-
-  if (newPayments.length === 0) return { created: 0 };
-
-  // Group by transaction_id (one receipt per payment source)
-  const groups = new Map<
-    number | null,
-    Array<{ session_id: number; transaction_id: number | null; amount: number }>
-  >();
-  for (const sp of newPayments) {
-    const key = sp.transaction_id ?? null;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(sp);
-  }
-
-  // Get the next receipt number for this user
+  // Get the next receipt number
   const { data: maxReceipt } = await (supabase as any)
     .from("receipts")
     .select("receipt_number")
@@ -73,60 +38,54 @@ export async function generateReceipts(
     .limit(1)
     .single();
 
-  let nextNumber = ((maxReceipt as any)?.receipt_number ?? 0) + 1;
-  let created = 0;
+  const nextNumber = ((maxReceipt as any)?.receipt_number ?? 0) + 1;
 
-  // Determine payment method per transaction
-  const transactionIds = [...groups.keys()].filter(
-    (id): id is number => id !== null
-  );
-  const { data: transactions } =
-    transactionIds.length > 0
-      ? await supabase
-          .from("transactions")
-          .select("id, date, type")
-          .in("id", transactionIds)
-      : { data: [] };
+  // Get the transaction to determine date and payment method
+  const { data: txn } = await supabase
+    .from("transactions")
+    .select("id, date, type")
+    .eq("id", transactionId)
+    .single();
 
-  const txnMap = new Map(
-    (transactions ?? []).map((t) => [t.id, t])
-  );
+  const paymentMethod = (txn as any)?.type === "cash" ? "cash" : "bank";
+  const receiptDate = txn?.date ?? new Date().toISOString().split("T")[0];
 
-  for (const [transactionId, payments] of groups) {
-    const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
-    const txn = transactionId ? txnMap.get(transactionId) : null;
-    const paymentMethod =
-      (txn as any)?.type === "cash" ? "cash" : "bank";
-    const receiptDate =
-      txn?.date ?? new Date().toISOString().split("T")[0];
+  // Create the receipt
+  const { data: receipt, error: receiptError } = await (supabase as any)
+    .from("receipts")
+    .insert({
+      user_id: userId,
+      receipt_number: nextNumber,
+      client_id: clientId,
+      date: receiptDate,
+      amount,
+      status: "generated",
+      payment_method: paymentMethod,
+      transaction_id: transactionId,
+    })
+    .select("id")
+    .single();
 
-    // Create receipt
-    const { data: receipt, error: receiptError } = await (supabase as any)
-      .from("receipts")
-      .insert({
-        user_id: userId,
-        receipt_number: nextNumber,
-        client_id: clientId,
-        date: receiptDate,
-        amount: totalAmount,
-        status: "generated",
-        payment_method: paymentMethod,
-        transaction_id: transactionId,
+  if (receiptError || !receipt) {
+    console.error("Failed to create receipt:", receiptError);
+    return { created: false, error: receiptError?.message };
+  }
+
+  // Attach allocated sessions if any exist for this transaction
+  const { data: sessionPayments } = await (supabase as any)
+    .from("session_payments")
+    .select("session_id, amount")
+    .eq("transaction_id", transactionId)
+    .eq("user_id", userId);
+
+  if (sessionPayments && sessionPayments.length > 0) {
+    const receiptSessionRows = sessionPayments.map(
+      (sp: { session_id: number; amount: number }) => ({
+        receipt_id: (receipt as any).id,
+        session_id: sp.session_id,
+        amount: sp.amount,
       })
-      .select("id")
-      .single();
-
-    if (receiptError || !receipt) {
-      console.error("Failed to create receipt:", receiptError);
-      continue;
-    }
-
-    // Create receipt_sessions
-    const receiptSessionRows = payments.map((p) => ({
-      receipt_id: (receipt as any).id,
-      session_id: p.session_id,
-      amount: p.amount,
-    }));
+    );
 
     const { error: rsError } = await (supabase as any)
       .from("receipt_sessions")
@@ -134,12 +93,8 @@ export async function generateReceipts(
 
     if (rsError) {
       console.error("Failed to create receipt_sessions:", rsError);
-      continue;
     }
-
-    nextNumber++;
-    created++;
   }
 
-  return { created };
+  return { created: true };
 }

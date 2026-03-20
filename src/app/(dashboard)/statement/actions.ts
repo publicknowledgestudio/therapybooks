@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { allocateSessionPayments } from "@/app/(dashboard)/clients/allocate-payments";
+import { generateReceiptForPayment } from "@/app/(dashboard)/clients/generate-receipt";
 
 export type TagSuggestion = {
   type: "category" | "invoice" | "contractor";
@@ -272,7 +273,9 @@ export async function linkClientToTransaction(
   if (error) return { error: error.message };
 
   await allocateSessionPayments(clientId);
+  await generateReceiptForPayment(clientId, transactionId, amount, user.id);
   revalidatePath("/statement");
+  revalidatePath("/receipts");
   return {};
 }
 
@@ -345,8 +348,10 @@ export async function recordCashPayment(params: {
 
   // Re-allocate session payments
   await allocateSessionPayments(params.clientId);
+  await generateReceiptForPayment(params.clientId, txn.id, params.amount, user.id);
 
   revalidatePath("/statement");
+  revalidatePath("/receipts");
   revalidatePath(`/clients/${params.clientId}`);
   return {};
 }
