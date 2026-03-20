@@ -15,6 +15,9 @@ export async function generateReceiptForPayment(
   amount: number,
   userId: string
 ): Promise<{ created: boolean; error?: string }> {
+  // Skip outgoing payments (negative amounts = therapist paid someone)
+  if (amount <= 0) return { created: false };
+
   const supabase = await createClient();
 
   // Check if a receipt already exists for this transaction+client
